@@ -12,8 +12,12 @@ class VentanaNotas(QtWidgets.QMainWindow):
         self.arregloAlumnos = ArregloAlumnos()
         self.arregloNotas = ArregloNotas()
         
+        # Configurar el combobox de cursos
+        self.cboCurso.clear()
+        self.cboCurso.addItems(["Matemáticas", "Física", "Química", "Programación", "Base de Datos", "Inglés"])
+        
         # Configurar la tabla de DNIs
-        self.tblDNIs.verticalHeader().setVisible(False)
+        self.tblNotas.verticalHeader().setVisible(False)
         
         # Conectar botones
         self.btnRegistrar.clicked.connect(self.registrar)
@@ -48,7 +52,10 @@ class VentanaNotas(QtWidgets.QMainWindow):
                 self.tblNotas.setItem(row, 0, QTableWidgetItem(codigo))
                 self.tblNotas.setItem(row, 1, QTableWidgetItem(alumno.getDniAlumno()))
                 self.tblNotas.setItem(row, 2, QTableWidgetItem(alumno.getApNomAlumno()))
-                self.tblNotas.setItem(row, 3, QTableWidgetItem(alumno.getCursoAlumno()))
+                
+                # Mostrar el curso de la nota, no del alumno
+                curso = nota.get("curso", alumno.getCursoAlumno())
+                self.tblNotas.setItem(row, 3, QTableWidgetItem(curso))
                 
                 # Notas
                 ec1 = nota["ec1"]
@@ -177,11 +184,6 @@ class VentanaNotas(QtWidgets.QMainWindow):
                 self.txtDni.setText(alumno.getDniAlumno())
                 self.txtApNom.setText(alumno.getApNomAlumno())
                 
-                # Seleccionar curso en combobox
-                index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
-                if index_curso != -1:
-                    self.cboCurso.setCurrentIndex(index_curso)
-                
                 # Mostrar notas si existen
                 index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
                 if index_nota != -1:
@@ -190,6 +192,17 @@ class VentanaNotas(QtWidgets.QMainWindow):
                     self.txtEC2.setText(nota["ec2"])
                     self.txtEC3.setText(nota["ec3"])
                     self.txtEF.setText(nota["exf"])
+                    
+                    # Seleccionar curso de la nota, si existe
+                    curso_nota = nota.get("curso", alumno.getCursoAlumno())
+                    index_curso = self.cboCurso.findText(curso_nota)
+                    if index_curso != -1:
+                        self.cboCurso.setCurrentIndex(index_curso)
+                else:
+                    # Si no hay notas, mostrar el curso del alumno
+                    index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
+                    if index_curso != -1:
+                        self.cboCurso.setCurrentIndex(index_curso)
     
     def eliminar(self):
         codigo = self.obtenerCodigo()
