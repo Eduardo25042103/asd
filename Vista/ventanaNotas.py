@@ -145,9 +145,9 @@ class VentanaNotas(QtWidgets.QMainWindow):
             
             # Registrar/actualizar notas
             if self.arregloNotas.buscarNotaPorCodigo(codigo) != -1:
-                self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf)
+                self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf, curso)
             else:
-                self.arregloNotas.adicionaNota(codigo, ec1, ec2, ec3, exf)
+                self.arregloNotas.adicionaNota(codigo, ec1, ec2, ec3, exf, curso)
             
             self.arregloNotas.grabar()
             QMessageBox.information(self, "Registrar Notas", 
@@ -256,6 +256,7 @@ class VentanaNotas(QtWidgets.QMainWindow):
     def modificar(self):
         if self.valida() == "":
             codigo = self.obtenerCodigo()
+            curso = self.obtenerCurso()
             ec1 = self.obtenerEC1()
             ec2 = self.obtenerEC2()
             ec3 = self.obtenerEC3()
@@ -268,7 +269,7 @@ class VentanaNotas(QtWidgets.QMainWindow):
                                       QMessageBox.Ok)
                 return
             
-            self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf)
+            self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf, curso)
             self.arregloNotas.grabar()
             
             QMessageBox.information(self, "Modificar Notas",
