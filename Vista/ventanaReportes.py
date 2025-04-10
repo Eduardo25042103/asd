@@ -1,16 +1,23 @@
 from PyQt5 import QtWidgets, uic
 from Controlador.arregloAlumnos import ArregloAlumnos
+from Controlador.arregloNotas import ArregloNotas
 from Controlador.alumnos import Alumno
 import os
 from datetime import datetime
 
-# Crear objeto de arreglo de alumnos
+# Crear objetos de arreglos
 aAlum = ArregloAlumnos()
+aNotas = ArregloNotas()
 
 class VentanaReportes(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(VentanaReportes, self).__init__(parent)
         uic.loadUi("UI/ventanaReportes.ui", self)
+        
+        # Configurar el combobox de cursos igual que en ventanaNotas
+        self.cboCurso.clear()
+        self.cboCurso.addItem("[Seleccionar]")
+        self.cboCurso.addItems(["Matemáticas", "Física", "Química", "Programación", "Base de Datos", "Inglés"])
         
         # Eventos de botones
         self.btnSalir.clicked.connect(self.close)
@@ -70,6 +77,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
         row_index = 0
         for i in range(aAlum.tamañoArregloAlumnos()):
             alumno = aAlum.devolverAlumno(i)
+            codigo = alumno.getCodigoAlumno()
             
             # Verificar si el alumno cumple con los filtros de estado
             if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
@@ -77,12 +85,17 @@ class VentanaReportes(QtWidgets.QMainWindow):
             if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
                 continue
             
-            cursos = alumno.getCursoAlumno()
+            # Obtener curso desde notas si existe, sino del alumno
+            index_nota = aNotas.buscarNotaPorCodigo(codigo)
+            if index_nota != -1:
+                curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
+            else:
+                curso = alumno.getCursoAlumno()
             
-            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(codigo))
             self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
             self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(cursos))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso))
             
             # Calcular y mostrar promedio
             promedio = alumno.Promedio()
@@ -120,12 +133,20 @@ class VentanaReportes(QtWidgets.QMainWindow):
             return
         
         alumno = aAlum.devolverAlumno(pos)
+        codigo = alumno.getCodigoAlumno()
         self.tblReportes.setRowCount(1)
         
-        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+        # Obtener curso desde notas si existe, sino del alumno
+        index_nota = aNotas.buscarNotaPorCodigo(codigo)
+        if index_nota != -1:
+            curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
+        else:
+            curso = alumno.getCursoAlumno()
+        
+        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
         self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(curso))
         
         # Calcular y mostrar promedio
         promedio = alumno.Promedio()
@@ -161,10 +182,17 @@ class VentanaReportes(QtWidgets.QMainWindow):
         alumno = aAlum.devolverAlumno(pos)
         self.tblReportes.setRowCount(1)
         
-        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+        # Obtener curso desde notas si existe, sino del alumno
+        index_nota = aNotas.buscarNotaPorCodigo(codigo)
+        if index_nota != -1:
+            curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
+        else:
+            curso = alumno.getCursoAlumno()
+        
+        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
         self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(curso))
         
         # Calcular y mostrar promedio
         promedio = alumno.Promedio()
@@ -181,27 +209,47 @@ class VentanaReportes(QtWidgets.QMainWindow):
     
     def buscarPorCurso(self):
         self.limpiarTabla()
-        curso = self.obtenerCurso()
+        curso_seleccionado = self.obtenerCurso()
         
-        if curso == "[Seleccionar]":
+        if curso_seleccionado == "[Seleccionar]":
             QtWidgets.QMessageBox.warning(self, "Buscar Alumnos", 
                                          "Por favor seleccione un curso", 
                                          QtWidgets.QMessageBox.Ok)
             return
         
-        posiciones = aAlum.buscarCurso(curso)
+        # Buscar primero en notas (como en ventanaNotas)
+        alumnos_por_curso = []
+        codigos_encontrados = set()
         
-        if not posiciones:
+        # Buscar en notas para encontrar alumnos por curso
+        for nota in aNotas.dataNotas:
+            if nota.get("curso") == curso_seleccionado:
+                codigo = nota["codigo"]
+                index_alumno = aAlum.buscarAlumnoPorCodigo(codigo)
+                if index_alumno != -1 and codigo not in codigos_encontrados:
+                    alumnos_por_curso.append(index_alumno)
+                    codigos_encontrados.add(codigo)
+        
+        # Buscar en alumnos para asegurar completitud (para retrocompatibilidad)
+        posiciones_adicionales = aAlum.buscarCurso(curso_seleccionado)
+        for pos in posiciones_adicionales:
+            alumno = aAlum.devolverAlumno(pos)
+            if alumno.getCodigoAlumno() not in codigos_encontrados:
+                alumnos_por_curso.append(pos)
+                codigos_encontrados.add(alumno.getCodigoAlumno())
+        
+        if not alumnos_por_curso:
             QtWidgets.QMessageBox.information(self, "Buscar Alumnos", 
-                                             "No se encontraron alumnos en el curso: " + curso, 
+                                             "No se encontraron alumnos en el curso: " + curso_seleccionado, 
                                              QtWidgets.QMessageBox.Ok)
             return
         
-        self.tblReportes.setRowCount(len(posiciones))
+        self.tblReportes.setRowCount(len(alumnos_por_curso))
         
         row_index = 0
-        for pos in posiciones:
+        for pos in alumnos_por_curso:
             alumno = aAlum.devolverAlumno(pos)
+            codigo = alumno.getCodigoAlumno()
             
             # Verificar si el alumno cumple con los filtros de estado
             if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
@@ -209,10 +257,10 @@ class VentanaReportes(QtWidgets.QMainWindow):
             if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
                 continue
             
-            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(codigo))
             self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
             self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso_seleccionado))
             
             # Calcular y mostrar promedio
             promedio = alumno.Promedio()
@@ -258,25 +306,28 @@ class VentanaReportes(QtWidgets.QMainWindow):
             self.aplicarFiltros()
     
     def mostrarEstadisticas(self):
-        total_alumnos = aAlum.tamañoArregloAlumnos()
+        total_alumnos = self.tblReportes.rowCount()  # Usar solo los alumnos mostrados en la tabla
         aprobados = 0
         desaprobados = 0
         promedios = []
         cursos = {}
         
         for i in range(total_alumnos):
-            alumno = aAlum.devolverAlumno(i)
-            if alumno.Estado() == "Aprobado":
+            estado = self.tblReportes.item(i, 5).text() if self.tblReportes.item(i, 5) else ""
+            if estado == "Aprobado":
                 aprobados += 1
             else:
                 desaprobados += 1
             
-            promedio = alumno.Promedio()
-            if isinstance(promedio, float):
+            promedio_texto = self.tblReportes.item(i, 4).text() if self.tblReportes.item(i, 4) else ""
+            try:
+                promedio = float(promedio_texto)
                 promedios.append(promedio)
+            except ValueError:
+                pass
             
             # Contar alumnos por curso
-            curso = alumno.getCursoAlumno()
+            curso = self.tblReportes.item(i, 3).text() if self.tblReportes.item(i, 3) else ""
             if curso in cursos:
                 cursos[curso] += 1
             else:
@@ -367,6 +418,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
                 total_alumnos = self.tblReportes.rowCount()
                 aprobados = 0
                 promedios = []
+                cursos = {}
                 
                 for fila in range(total_alumnos):
                     estado = self.tblReportes.item(fila, 5).text() if self.tblReportes.item(fila, 5) else ""
@@ -379,13 +431,25 @@ class VentanaReportes(QtWidgets.QMainWindow):
                         promedios.append(promedio)
                     except ValueError:
                         pass
+                    
+                    # Contar alumnos por curso
+                    curso = self.tblReportes.item(fila, 3).text() if self.tblReportes.item(fila, 3) else ""
+                    if curso in cursos:
+                        cursos[curso] += 1
+                    else:
+                        cursos[curso] = 1
                 
                 promedio_general = sum(promedios) / len(promedios) if promedios else 0
                 
                 archivo.write(f"Total de alumnos en el reporte: {total_alumnos}\n")
                 archivo.write(f"Alumnos aprobados: {aprobados}\n")
                 archivo.write(f"Alumnos desaprobados: {total_alumnos - aprobados}\n")
-                archivo.write(f"Promedio general: {promedio_general:.2f}\n")
+                archivo.write(f"Promedio general: {promedio_general:.2f}\n\n")
+                
+                # Agregar distribución por curso
+                archivo.write("Distribución por curso:\n")
+                for curso, cantidad in cursos.items():
+                    archivo.write(f"- {curso}: {cantidad} alumnos\n")
                 
             QtWidgets.QMessageBox.information(self, "Exportar Reporte", 
                                             f"Reporte exportado exitosamente a:\n{filename}", 

@@ -15,7 +15,11 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         self.arregloAsistencias = ArregloAsistencias()
 
         # Configurar la tabla de DNIs
-        self.tblDNIs.verticalHeader().setVisible(False)
+        self.tblAsistencias.verticalHeader().setVisible(False)
+        
+        # Configurar el combobox de cursos (igual que en ventanaNotas)
+        self.cboCurso.clear()
+        self.cboCurso.addItems(["Matemáticas", "Física", "Química", "Programación", "Base de Datos", "Inglés"])
         
         # Conectar botones con funciones
         self.btnRegistrar.clicked.connect(self.registrarAsistencia)
@@ -36,6 +40,7 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         dni = self.txtDni.text()
         fecha = self.dateFecha.date().toString("yyyy-MM-dd")
         estado = self.cboEstado.currentText()
+        curso = self.cboCurso.currentText()  # Obtener curso del combobox
         
         # Verificar que se haya ingresado un código o DNI
         if not codigo and not dni:
@@ -57,8 +62,8 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         alumno = self.arregloAlumnos.devolverAlumno(index)
         codigo = alumno.getCodigoAlumno()
         
-        # Registrar asistencia
-        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado)
+        # Registrar asistencia con curso
+        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado, curso)
         self.arregloAsistencias.grabar()
         
         QMessageBox.information(self, "Éxito", "Asistencia registrada correctamente")
@@ -94,7 +99,16 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         self.txtApNom.setText(alumno.getApNomAlumno())
         
         # Establecer curso en el combo box
-        index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
+        # Primero intentamos buscar asistencia para obtener su curso
+        asistencias_alumno = self.arregloAsistencias.buscarAsistenciasPorCodigo(alumno.getCodigoAlumno())
+        if asistencias_alumno and 'curso' in asistencias_alumno[0]:
+            # Si hay asistencias con curso, usamos ese curso
+            curso_asistencia = asistencias_alumno[0].get('curso')
+            index_curso = self.cboCurso.findText(curso_asistencia)
+        else:
+            # Si no, usamos el curso del alumno
+            index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
+        
         if index_curso != -1:
             self.cboCurso.setCurrentIndex(index_curso)
         
@@ -116,7 +130,10 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
             self.tblAsistencias.setItem(rowPosition, 0, QTableWidgetItem(asistencia["codigo"]))
             self.tblAsistencias.setItem(rowPosition, 1, QTableWidgetItem(asistencia["dni"]))
             self.tblAsistencias.setItem(rowPosition, 2, QTableWidgetItem(asistencia["nombre"]))
+            
+            # Mostrar el curso de la asistencia (que ya viene resuelto del método generarReporteAsistencias)
             self.tblAsistencias.setItem(rowPosition, 3, QTableWidgetItem(asistencia["curso"]))
+            
             self.tblAsistencias.setItem(rowPosition, 4, QTableWidgetItem(asistencia["fecha"]))
             self.tblAsistencias.setItem(rowPosition, 5, QTableWidgetItem(asistencia["estado"]))
     
@@ -135,7 +152,10 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
             self.tblAsistencias.setItem(rowPosition, 0, QTableWidgetItem(asistencia["codigo"]))
             self.tblAsistencias.setItem(rowPosition, 1, QTableWidgetItem(asistencia["dni"]))
             self.tblAsistencias.setItem(rowPosition, 2, QTableWidgetItem(asistencia["nombre"]))
+            
+            # Mostrar el curso de la asistencia (que ya viene resuelto del método generarReporteAsistencias)
             self.tblAsistencias.setItem(rowPosition, 3, QTableWidgetItem(asistencia["curso"]))
+            
             self.tblAsistencias.setItem(rowPosition, 4, QTableWidgetItem(asistencia["fecha"]))
             self.tblAsistencias.setItem(rowPosition, 5, QTableWidgetItem(asistencia["estado"]))
     
@@ -150,11 +170,12 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         codigo = self.tblAsistencias.item(fila_seleccionada, 0).text()
         fecha = self.tblAsistencias.item(fila_seleccionada, 4).text()
         
-        # Obtener nuevo estado
+        # Obtener nuevo estado y curso
         estado = self.cboEstado.currentText()
+        curso = self.cboCurso.currentText()  # Obtener curso del combobox
         
-        # Actualizar asistencia
-        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado)
+        # Actualizar asistencia con curso
+        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado, curso)
         self.arregloAsistencias.grabar()
         
         QMessageBox.information(self, "Éxito", "Asistencia actualizada correctamente")

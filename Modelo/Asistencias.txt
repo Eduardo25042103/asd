@@ -1,2 +1,3 @@
 23,2025-04-09,Tardanza
 23,2025-04-24,Presente
+12,2025-04-10,Presente,Matemáticas

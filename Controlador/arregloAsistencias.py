@@ -9,12 +9,14 @@ class ArregloAsistencias():
     def __init__(self):
         self.cargar()
     
-    def registrarAsistencia(self, codigo, fecha, estado):
+    def registrarAsistencia(self, codigo, fecha, estado, curso=None):
         # Buscar si ya existe una asistencia para este código y fecha
         for i, asistencia in enumerate(self.dataAsistencias):
             if asistencia["codigo"] == codigo and asistencia["fecha"] == fecha:
-                # Actualizar estado
+                # Actualizar estado y curso
                 self.dataAsistencias[i]["estado"] = estado
+                if curso:
+                    self.dataAsistencias[i]["curso"] = curso
                 return True
         
         # Si no existe, crear nueva asistencia
@@ -23,6 +25,11 @@ class ArregloAsistencias():
             "fecha": fecha,
             "estado": estado
         }
+        
+        # Agregar curso si fue proporcionado
+        if curso:
+            asistencia["curso"] = curso
+            
         self.dataAsistencias.append(asistencia)
         return True
     
@@ -33,6 +40,10 @@ class ArregloAsistencias():
                 if fecha is None or asistencia["fecha"] == fecha:
                     resultados.append(asistencia)
         return resultados
+    
+    def buscarAsistenciasPorCodigo(self, codigo):
+        """Devuelve todas las asistencias de un alumno dado su código"""
+        return self.buscarAsistencia(codigo)
     
     def eliminarAsistencia(self, codigo, fecha):
         for i, asistencia in enumerate(self.dataAsistencias):
@@ -55,22 +66,25 @@ class ArregloAsistencias():
             # Si se especificó una fecha y no coincide, saltar
             if fecha and asistencia["fecha"] != fecha:
                 continue
-                
-            # Si se especificó un curso, verificar si el alumno está en ese curso
-            if curso:
-                index = aAlumnos.buscarAlumnoPorCodigo(asistencia["codigo"])
-                if index == -1 or aAlumnos.devolverAlumno(index).getCursoAlumno() != curso:
-                    continue
             
             # Buscar datos del alumno
             index = aAlumnos.buscarAlumnoPorCodigo(asistencia["codigo"])
             if index != -1:
                 alumno = aAlumnos.devolverAlumno(index)
+                curso_alumno = alumno.getCursoAlumno()
+                
+                # Si se especificó un curso, verificar si coincide con el curso de la asistencia o del alumno
+                if curso:
+                    curso_asistencia = asistencia.get("curso", curso_alumno)
+                    if curso_asistencia != curso:
+                        continue
+                
                 resultados.append({
                     "codigo": asistencia["codigo"],
                     "dni": alumno.getDniAlumno(),
                     "nombre": alumno.getApNomAlumno(),
-                    "curso": alumno.getCursoAlumno(),
+                    "curso": asistencia.get("curso", curso_alumno),  # Usar curso de asistencia si existe, sino curso del alumno
+                    "curso_alumno": curso_alumno,  # Guardar el curso original del alumno para referencia
                     "fecha": asistencia["fecha"],
                     "estado": asistencia["estado"]
                 })
@@ -90,11 +104,15 @@ class ArregloAsistencias():
     def grabar(self):
         archivo = open("Modelo/Asistencias.txt", "w+", encoding="UTF-8")
         for asistencia in self.dataAsistencias:
-            archivo.write(
-                asistencia["codigo"] + "," +
-                asistencia["fecha"] + "," +
-                asistencia["estado"] + "\n"
-            )
+            linea = (asistencia["codigo"] + "," +
+                    asistencia["fecha"] + "," +
+                    asistencia["estado"])
+            
+            # Agregar el curso si existe
+            if "curso" in asistencia:
+                linea += "," + asistencia["curso"]
+                
+            archivo.write(linea + "\n")
         archivo.close()
     
     def cargar(self):
@@ -108,7 +126,12 @@ class ArregloAsistencias():
                     fecha = columna[1]
                     estado = columna[2]
                     
-                    self.registrarAsistencia(codigo, fecha, estado)
+                    # Obtener curso si existe
+                    curso = None
+                    if len(columna) >= 4:
+                        curso = columna[3]
+                    
+                    self.registrarAsistencia(codigo, fecha, estado, curso)
             archivo.close()
         except FileNotFoundError:
             open("Modelo/Asistencias.txt", "w", encoding="UTF-8").close()

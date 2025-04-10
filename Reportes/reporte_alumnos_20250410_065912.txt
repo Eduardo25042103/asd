@@ -1,0 +1,24 @@
+REPORTE DE ALUMNOS
+=================
+
+Fecha y hora: 10/04/2025 06:59:12
+
+Código          DNI          Ap/Nombres                     Cursos               Promedio   Estado         
+----------------------------------------------------------------------------------------------------
+777             777          123                            Física               Nota inválida Desaprobado     
+12              12           asd                            Química              Nota inválida Desaprobado     
+IV34            8756         edu                            Programación         Nota inválida Desaprobado     
+
+
+RESUMEN DE DATOS
+==============
+
+Total de alumnos en el reporte: 3
+Alumnos aprobados: 0
+Alumnos desaprobados: 3
+Promedio general: 0.00
+
+Distribución por curso:
+- Física: 1 alumnos
+- Química: 1 alumnos
+- Programación: 1 alumnos
