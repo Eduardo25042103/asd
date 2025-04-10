@@ -5,10 +5,6 @@ from Controlador.alumnos import Alumno
 import os
 from datetime import datetime
 
-# Crear objetos de arreglos
-aAlum = ArregloAlumnos()
-aNotas = ArregloNotas()
-
 class VentanaReportes(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(VentanaReportes, self).__init__(parent)
@@ -25,7 +21,6 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.btnBuscarCurso.clicked.connect(self.buscarPorCurso)
         self.btnBuscarCodigo.clicked.connect(self.buscarPorCodigo)
         self.btnListarTodos.clicked.connect(self.listarTodos)
-        # Simplificación: remover estadísticas avanzadas
         self.btnEstadisticas.clicked.connect(self.mostrarEstadisticasSimples)
         self.btnExportar.clicked.connect(self.exportarReporte)
         self.btnLimpiar.clicked.connect(self.limpiarFiltros)
@@ -34,6 +29,10 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.rbTodos.toggled.connect(self.aplicarFiltros)
         self.rbAprobados.toggled.connect(self.aplicarFiltros)
         self.rbDesaprobados.toggled.connect(self.aplicarFiltros)
+        
+        # Crear instancias frescas de los arreglos
+        self.aAlum = ArregloAlumnos()
+        self.aNotas = ArregloNotas()
         
         # Cargar datos al iniciar
         self.listarTodos()
@@ -58,71 +57,70 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.rbTodos.setChecked(True)
         self.listarTodos()
     
-    def obtenerPromedioActualizado(self, alumno):
-        """Método para obtener el promedio actualizado del alumno usando las notas más recientes"""
-        codigo = alumno.getCodigoAlumno()
-        index_nota = aNotas.buscarNotaPorCodigo(codigo)
+    def obtenerNotas(self, codigo):
+        """Obtiene las notas de un alumno por su código, recargando primero para asegurar datos actualizados"""
+        # Recargar datos de notas
+        self.aNotas = ArregloNotas()  # Crear una nueva instancia para forzar la carga
         
+        # Buscar notas por código
+        index_nota = self.aNotas.buscarNotaPorCodigo(codigo)
         if index_nota != -1:
-            # Si hay notas registradas, calcular el promedio con los datos actualizados
-            nota_data = aNotas.dataNotas[index_nota]
-            
-            # Obtener los valores de las notas
+            return self.aNotas.dataNotas[index_nota]
+        return None
+    
+    def calcularPromedio(self, codigo):
+        """Calcula el promedio actual de un alumno usando las notas más recientes"""
+        nota_data = self.obtenerNotas(codigo)
+        
+        if nota_data:
             try:
-                ec1 = float(nota_data.get("ec1", 0))
-                ec2 = float(nota_data.get("ec2", 0))
-                ec3 = float(nota_data.get("ec3", 0))
-                exf = float(nota_data.get("exf", 0))
+                ec1 = nota_data.get("ec1", "0") 
+                ec2 = nota_data.get("ec2", "0")
+                ec3 = nota_data.get("ec3", "0")
+                exf = nota_data.get("exf", "0")
                 
                 # Calcular el promedio usando el método de ArregloNotas
-                return aNotas.calcularPromedio(ec1, ec2, ec3, exf)
+                return self.aNotas.calcularPromedio(ec1, ec2, ec3, exf)
             except (ValueError, TypeError):
-                # Si hay error al convertir alguna nota, retornar "Sin notas válidas"
                 return "Sin notas válidas"
-        else:
-            # Si no hay notas registradas, intentar usar el método del alumno
-            try:
-                promedio = alumno.Promedio()
-                return promedio if promedio else "Sin notas"
-            except:
-                return "Sin notas"
-        
-    def obtenerEstadoActualizado(self, promedio):
-        """Método para obtener el estado basado en el promedio actualizado"""
+        return "Sin notas"
+    
+    def determinarEstado(self, promedio):
+        """Determina el estado basado en el promedio"""
         if isinstance(promedio, str):
             return "Pendiente"
         
-        # Usar el método de determinación de estado de ArregloNotas
-        return aNotas.determinarEstado(promedio)
+        return self.aNotas.determinarEstado(promedio)
     
     def listarTodos(self):
-        self.limpiarTabla()
+        # Recargar datos
+        self.aAlum = ArregloAlumnos()  # Crear una nueva instancia para forzar la carga
+        self.aNotas = ArregloNotas()   # Crear una nueva instancia para forzar la carga
         
-        # Primero, obtener todos los códigos de alumnos con notas registradas
-        alumnos_con_notas = {}
-        for nota in aNotas.dataNotas:
-            codigo = nota["codigo"]
-            alumnos_con_notas[codigo] = nota
+        self.limpiarTabla()
         
         # Crear una lista para almacenar los datos a mostrar
         datos_a_mostrar = []
         
         # Procesar todos los alumnos
-        for i in range(aAlum.tamañoArregloAlumnos()):
-            alumno = aAlum.devolverAlumno(i)
+        for i in range(self.aAlum.tamañoArregloAlumnos()):
+            alumno = self.aAlum.devolverAlumno(i)
             codigo = alumno.getCodigoAlumno()
             
-            # Obtener el curso actualizado (desde notas o desde alumno)
+            # Obtener notas para este alumno
+            nota_data = self.obtenerNotas(codigo)
+            
+            # Obtener el curso (desde notas o desde alumno)
             curso = alumno.getCursoAlumno()
-            if codigo in alumnos_con_notas:
-                nota_data = alumnos_con_notas[codigo]
+            if nota_data:
+                # Si hay notas, usar el curso de las notas
                 curso = nota_data.get("curso", curso)
             
-            # Obtener promedio actualizado
-            promedio = self.obtenerPromedioActualizado(alumno)
+            # Calcular promedio actualizado
+            promedio = self.calcularPromedio(codigo)
             
             # Determinar estado basado en el promedio
-            estado = self.obtenerEstadoActualizado(promedio)
+            estado = self.determinarEstado(promedio)
             
             # Verificar si el alumno cumple con los filtros de estado
             if self.rbAprobados.isChecked() and estado != "Aprobado":
@@ -163,6 +161,10 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.tblReportes.resizeColumnsToContents()
     
     def buscarPorDNI(self):
+        # Recargar datos
+        self.aAlum = ArregloAlumnos()
+        self.aNotas = ArregloNotas()
+        
         self.limpiarTabla()
         dni = self.obtenerDNI()
         
@@ -172,7 +174,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                          QtWidgets.QMessageBox.Ok)
             return
         
-        pos = aAlum.buscarAlumno(dni)
+        pos = self.aAlum.buscarAlumno(dni)
         
         if pos == -1:
             QtWidgets.QMessageBox.information(self, "Buscar Alumno", 
@@ -180,20 +182,19 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                              QtWidgets.QMessageBox.Ok)
             return
         
-        alumno = aAlum.devolverAlumno(pos)
+        alumno = self.aAlum.devolverAlumno(pos)
         codigo = alumno.getCodigoAlumno()
         self.tblReportes.setRowCount(1)
         
-        # Obtener curso desde notas si existe, sino del alumno
-        index_nota = aNotas.buscarNotaPorCodigo(codigo)
-        if index_nota != -1:
-            curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
-        else:
-            curso = alumno.getCursoAlumno()
+        # Obtener notas y curso
+        nota_data = self.obtenerNotas(codigo)
+        curso = alumno.getCursoAlumno()
+        if nota_data:
+            curso = nota_data.get("curso", curso)
         
-        # Obtener promedio actualizado
-        promedio = self.obtenerPromedioActualizado(codigo)
-        estado = self.obtenerEstadoActualizado(promedio)
+        # Calcular promedio actualizado
+        promedio = self.calcularPromedio(codigo)
+        estado = self.determinarEstado(promedio)
         
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
@@ -213,6 +214,10 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.tblReportes.resizeColumnsToContents()
     
     def buscarPorCodigo(self):
+        # Recargar datos
+        self.aAlum = ArregloAlumnos()
+        self.aNotas = ArregloNotas()
+        
         self.limpiarTabla()
         codigo = self.obtenerCodigo()
         
@@ -222,7 +227,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                          QtWidgets.QMessageBox.Ok)
             return
         
-        pos = aAlum.buscarAlumnoPorCodigo(codigo)
+        pos = self.aAlum.buscarAlumnoPorCodigo(codigo)
         
         if pos == -1:
             QtWidgets.QMessageBox.information(self, "Buscar Alumno", 
@@ -230,19 +235,18 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                              QtWidgets.QMessageBox.Ok)
             return
         
-        alumno = aAlum.devolverAlumno(pos)
+        alumno = self.aAlum.devolverAlumno(pos)
         self.tblReportes.setRowCount(1)
         
-        # Obtener curso desde notas si existe, sino del alumno
-        index_nota = aNotas.buscarNotaPorCodigo(codigo)
-        if index_nota != -1:
-            curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
-        else:
-            curso = alumno.getCursoAlumno()
+        # Obtener notas y curso
+        nota_data = self.obtenerNotas(codigo)
+        curso = alumno.getCursoAlumno()
+        if nota_data:
+            curso = nota_data.get("curso", curso)
         
-        # Obtener promedio actualizado
-        promedio = self.obtenerPromedioActualizado(codigo)
-        estado = self.obtenerEstadoActualizado(promedio)
+        # Calcular promedio actualizado
+        promedio = self.calcularPromedio(codigo)
+        estado = self.determinarEstado(promedio)
         
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
@@ -262,6 +266,10 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.tblReportes.resizeColumnsToContents()
     
     def buscarPorCurso(self):
+        # Recargar datos
+        self.aAlum = ArregloAlumnos()
+        self.aNotas = ArregloNotas()
+        
         self.limpiarTabla()
         curso_seleccionado = self.obtenerCurso()
         
@@ -271,28 +279,28 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                          QtWidgets.QMessageBox.Ok)
             return
         
-        # Buscar primero en notas (como en ventanaNotas)
-        alumnos_por_curso = []
-        codigos_encontrados = set()
+        # Alumnos por curso (encontrados en notas o en registros de alumnos)
+        codigos_alumnos = set()
+        posiciones_alumnos = []
         
         # Buscar en notas para encontrar alumnos por curso
-        for nota in aNotas.dataNotas:
+        for nota in self.aNotas.dataNotas:
             if nota.get("curso") == curso_seleccionado:
                 codigo = nota["codigo"]
-                index_alumno = aAlum.buscarAlumnoPorCodigo(codigo)
-                if index_alumno != -1 and codigo not in codigos_encontrados:
-                    alumnos_por_curso.append(index_alumno)
-                    codigos_encontrados.add(codigo)
+                index_alumno = self.aAlum.buscarAlumnoPorCodigo(codigo)
+                if index_alumno != -1 and codigo not in codigos_alumnos:
+                    posiciones_alumnos.append(index_alumno)
+                    codigos_alumnos.add(codigo)
         
-        # Buscar en alumnos para asegurar completitud (para retrocompatibilidad)
-        posiciones_adicionales = aAlum.buscarCurso(curso_seleccionado)
+        # Buscar en alumnos para asegurar completitud
+        posiciones_adicionales = self.aAlum.buscarCurso(curso_seleccionado)
         for pos in posiciones_adicionales:
-            alumno = aAlum.devolverAlumno(pos)
-            if alumno.getCodigoAlumno() not in codigos_encontrados:
-                alumnos_por_curso.append(pos)
-                codigos_encontrados.add(alumno.getCodigoAlumno())
+            alumno = self.aAlum.devolverAlumno(pos)
+            if alumno.getCodigoAlumno() not in codigos_alumnos:
+                posiciones_alumnos.append(pos)
+                codigos_alumnos.add(alumno.getCodigoAlumno())
         
-        if not alumnos_por_curso:
+        if not posiciones_alumnos:
             QtWidgets.QMessageBox.information(self, "Buscar Alumnos", 
                                              "No se encontraron alumnos en el curso: " + curso_seleccionado, 
                                              QtWidgets.QMessageBox.Ok)
@@ -301,13 +309,13 @@ class VentanaReportes(QtWidgets.QMainWindow):
         # Lista para almacenar los alumnos que cumplan con los filtros
         alumnos_filtrados = []
         
-        for pos in alumnos_por_curso:
-            alumno = aAlum.devolverAlumno(pos)
+        for pos in posiciones_alumnos:
+            alumno = self.aAlum.devolverAlumno(pos)
             codigo = alumno.getCodigoAlumno()
             
-            # Obtener promedio actualizado
-            promedio = self.obtenerPromedioActualizado(codigo)
-            estado = self.obtenerEstadoActualizado(promedio)
+            # Calcular promedio actualizado
+            promedio = self.calcularPromedio(codigo)
+            estado = self.determinarEstado(promedio)
             
             # Verificar si el alumno cumple con los filtros de estado
             if self.rbAprobados.isChecked() and estado != "Aprobado":
@@ -358,20 +366,6 @@ class VentanaReportes(QtWidgets.QMainWindow):
         else:
             # Si no hay filtros específicos, aplicar a todos
             self.listarTodos()
-    
-    def filtrarPorEstado(self):
-        estado, ok = QtWidgets.QInputDialog.getItem(self, "Filtrar por Estado",
-                                                  "Seleccione el estado:",
-                                                  ["Todos", "Aprobados", "Desaprobados"], 0, False)
-        if ok:
-            if estado == "Aprobados":
-                self.rbAprobados.setChecked(True)
-            elif estado == "Desaprobados":
-                self.rbDesaprobados.setChecked(True)
-            else:
-                self.rbTodos.setChecked(True)
-            
-            self.aplicarFiltros()
     
     def mostrarEstadisticasSimples(self):
         """Versión simplificada de estadísticas"""

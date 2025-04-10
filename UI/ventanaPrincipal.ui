@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>303</width>
-    <height>584</height>
+    <width>284</width>
+    <height>392</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -191,7 +191,7 @@ font: 75 12pt &quot;MS Shell Dlg 2&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>303</width>
+     <width>284</width>
      <height>21</height>
     </rect>
    </property>

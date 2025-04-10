@@ -1,0 +1,16 @@
+REPORTE DE ALUMNOS
+=================
+
+Fecha y hora: 10/04/2025 09:03:48
+
+Código          DNI          Ap/Nombres                     Cursos               Promedio   Estado         
+----------------------------------------------------------------------------------------------------
+12              73           ssss                           Matemáticas          10.74      Desaprobado     
+
+
+RESUMEN
+=======
+
+Total de alumnos: 1
+Alumnos aprobados: 0
+Alumnos desaprobados: 1
