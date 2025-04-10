@@ -12,6 +12,9 @@ class VentanaNotas(QtWidgets.QMainWindow):
         self.arregloAlumnos = ArregloAlumnos()
         self.arregloNotas = ArregloNotas()
         
+        # Configurar la tabla de DNIs
+        self.tblDNIs.verticalHeader().setVisible(False)
+        
         # Conectar botones
         self.btnRegistrar.clicked.connect(self.registrar)
         self.btnConsultar.clicked.connect(self.consultar)

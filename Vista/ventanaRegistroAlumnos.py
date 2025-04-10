@@ -9,6 +9,15 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         uic.loadUi('UI/ventanaRegistroAlumnos.ui', self)
         
         self.arregloAlumnos = ArregloAlumnos()
+
+        self.cboCurso = QtWidgets.QComboBox(self)
+        self.cboCurso.addItems(["Matemáticas", "Física", "Química", "Programación", "Base de Datos", "Inglés"])
+        self.cboCurso.setGeometry(30, 250, 161, 20)  # Posicionarlo debajo del campo txtApNom
+        
+        # Añadir etiqueta para el combobox
+        self.lblCurso = QtWidgets.QLabel(self)
+        self.lblCurso.setText("Curso:")
+        self.lblCurso.setGeometry(30, 230, 181, 20)
         
         self.btnRegistrar.clicked.connect(self.registrarAlumno)
         self.btnBuscar.clicked.connect(self.buscarAlumno)
@@ -38,11 +47,12 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
             # Insertar DNI y código
             self.tblDNIs.setItem(rowPosition, 0, QTableWidgetItem(alumno.getDniAlumno()))
             self.tblDNIs.setItem(rowPosition, 1, QTableWidgetItem(alumno.getCodigoAlumno()))
-    
+            self.tblDNIs.setItem(rowPosition, 2, QTableWidgetItem(alumno.getCursoAlumno()))
     def registrarAlumno(self):
         codigo = self.txtCodigo.text()
         dni = self.txtDni.text()
         apnom = self.txtApNom.text()
+        curso = self.cboCurso.currentText()
         
         if not codigo or not dni or not apnom:
             QMessageBox.warning(self, "Error", "Debe completar todos los campos obligatorios")
@@ -56,7 +66,7 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "Error", "Ya existe un alumno con el mismo DNI")
             return
         
-        objAlumno = Alumno(codigo, dni, apnom, "", "", "", "", "")
+        objAlumno = Alumno(codigo, dni, apnom, curso, "", "", "", "")
         
         self.arregloAlumnos.adicionaAlumnos(objAlumno)
         self.arregloAlumnos.grabar()
@@ -70,6 +80,7 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
     def buscarAlumno(self):
         codigo = self.txtCodigo.text()
         dni = self.txtDni.text()
+        curso = self.cboCurso.currentText()
         
         if not codigo and not dni:
             QMessageBox.warning(self, "Error", "Debe ingresar el código o DNI del alumno")
@@ -90,6 +101,10 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         self.txtCodigo.setText(alumno.getCodigoAlumno())
         self.txtDni.setText(alumno.getDniAlumno())
         self.txtApNom.setText(alumno.getApNomAlumno())
+
+        index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
+        if index_curso != -1:
+            self.cboCurso.setCurrentIndex(index_curso)
     
     def eliminarAlumno(self):
         codigo = self.txtCodigo.text()
@@ -123,3 +138,4 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         self.txtCodigo.clear()
         self.txtDni.clear()
         self.txtApNom.clear()
+        self.cboCurso.setCurrentIndex(0)

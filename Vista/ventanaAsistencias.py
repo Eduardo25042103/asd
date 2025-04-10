@@ -13,6 +13,9 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         # Inicializar arreglos
         self.arregloAlumnos = ArregloAlumnos()
         self.arregloAsistencias = ArregloAsistencias()
+
+        # Configurar la tabla de DNIs
+        self.tblDNIs.verticalHeader().setVisible(False)
         
         # Conectar botones con funciones
         self.btnRegistrar.clicked.connect(self.registrarAsistencia)
