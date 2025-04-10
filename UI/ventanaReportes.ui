@@ -408,37 +408,6 @@
     </property>
    </widget>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1164</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuArchivo">
-    <property name="title">
-     <string>Archivo</string>
-    </property>
-    <addaction name="actionExportar_a_PDF"/>
-    <addaction name="actionExportar_a_Excel"/>
-    <addaction name="separator"/>
-    <addaction name="actionSalir"/>
-   </widget>
-   <widget class="QMenu" name="menuReportes">
-    <property name="title">
-     <string>Reportes</string>
-    </property>
-    <addaction name="actionListado_General"/>
-    <addaction name="actionPor_Curso"/>
-    <addaction name="actionPor_Estado"/>
-    <addaction name="separator"/>
-    <addaction name="actionEstadisticas"/>
-   </widget>
-   <addaction name="menuArchivo"/>
-   <addaction name="menuReportes"/>
-  </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExportar_a_PDF">
    <property name="text">

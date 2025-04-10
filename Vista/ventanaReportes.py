@@ -30,21 +30,6 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.btnExportar.clicked.connect(self.exportarReporte)
         self.btnLimpiar.clicked.connect(self.limpiarFiltros)
         
-        # Conectar acciones del menú
-        self.actionSalir.triggered.connect(self.close)
-        self.actionListado_General.triggered.connect(self.listarTodos)
-        self.actionPor_Curso.triggered.connect(self.buscarPorCurso)
-        self.actionPor_Estado.triggered.connect(self.filtrarPorEstado)
-        self.actionEstadisticas.triggered.connect(self.mostrarEstadisticasSimples)
-        
-        # Mantener solo la exportación a TXT
-        if hasattr(self, 'actionExportar_a_PDF'):
-            self.actionExportar_a_PDF.setText("Exportar a TXT")
-            self.actionExportar_a_PDF.triggered.connect(self.exportarReporte)
-        if hasattr(self, 'actionExportar_a_Excel'):
-            self.actionExportar_a_Excel.setText("Exportar a TXT")
-            self.actionExportar_a_Excel.triggered.connect(self.exportarReporte)
-        
         # Radio buttons para filtros
         self.rbTodos.toggled.connect(self.aplicarFiltros)
         self.rbAprobados.toggled.connect(self.aplicarFiltros)
@@ -74,48 +59,69 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.listarTodos()
     
     def obtenerPromedioActualizado(self, alumno):
-        """Método para obtener el promedio actualizado del alumno"""
+        """Método para obtener el promedio actualizado del alumno usando las notas más recientes"""
         codigo = alumno.getCodigoAlumno()
         index_nota = aNotas.buscarNotaPorCodigo(codigo)
         
         if index_nota != -1:
             # Si hay notas registradas, calcular el promedio con los datos actualizados
             nota_data = aNotas.dataNotas[index_nota]
-            notas = [
-                float(nota_data.get("nota1", 0)),
-                float(nota_data.get("nota2", 0)),
-                float(nota_data.get("nota3", 0)),
-                float(nota_data.get("nota4", 0))
-            ]
-            # Filtrar notas que son cero (no registradas)
-            notas_validas = [n for n in notas if n > 0]
-            if notas_validas:
-                return sum(notas_validas) / len(notas_validas)
-            else:
-                return "Sin notas"
+            
+            # Obtener los valores de las notas
+            try:
+                ec1 = float(nota_data.get("ec1", 0))
+                ec2 = float(nota_data.get("ec2", 0))
+                ec3 = float(nota_data.get("ec3", 0))
+                exf = float(nota_data.get("exf", 0))
+                
+                # Calcular el promedio usando el método de ArregloNotas
+                return aNotas.calcularPromedio(ec1, ec2, ec3, exf)
+            except (ValueError, TypeError):
+                # Si hay error al convertir alguna nota, retornar "Sin notas válidas"
+                return "Sin notas válidas"
         else:
-            # Si no hay notas registradas, usar el método del alumno
-            promedio = alumno.Promedio()
-            return promedio
-    
+            # Si no hay notas registradas, intentar usar el método del alumno
+            try:
+                promedio = alumno.Promedio()
+                return promedio if promedio else "Sin notas"
+            except:
+                return "Sin notas"
+        
     def obtenerEstadoActualizado(self, promedio):
         """Método para obtener el estado basado en el promedio actualizado"""
         if isinstance(promedio, str):
             return "Pendiente"
         
-        return "Aprobado" if promedio >= 11 else "Desaprobado"
+        # Usar el método de determinación de estado de ArregloNotas
+        return aNotas.determinarEstado(promedio)
     
     def listarTodos(self):
         self.limpiarTabla()
-        self.tblReportes.setRowCount(aAlum.tamañoArregloAlumnos())
         
-        row_index = 0
+        # Primero, obtener todos los códigos de alumnos con notas registradas
+        alumnos_con_notas = {}
+        for nota in aNotas.dataNotas:
+            codigo = nota["codigo"]
+            alumnos_con_notas[codigo] = nota
+        
+        # Crear una lista para almacenar los datos a mostrar
+        datos_a_mostrar = []
+        
+        # Procesar todos los alumnos
         for i in range(aAlum.tamañoArregloAlumnos()):
             alumno = aAlum.devolverAlumno(i)
             codigo = alumno.getCodigoAlumno()
             
+            # Obtener el curso actualizado (desde notas o desde alumno)
+            curso = alumno.getCursoAlumno()
+            if codigo in alumnos_con_notas:
+                nota_data = alumnos_con_notas[codigo]
+                curso = nota_data.get("curso", curso)
+            
             # Obtener promedio actualizado
             promedio = self.obtenerPromedioActualizado(alumno)
+            
+            # Determinar estado basado en el promedio
             estado = self.obtenerEstadoActualizado(promedio)
             
             # Verificar si el alumno cumple con los filtros de estado
@@ -124,30 +130,34 @@ class VentanaReportes(QtWidgets.QMainWindow):
             if self.rbDesaprobados.isChecked() and estado != "Desaprobado":
                 continue
             
-            # Obtener curso desde notas si existe, sino del alumno
-            index_nota = aNotas.buscarNotaPorCodigo(codigo)
-            if index_nota != -1:
-                curso = aNotas.dataNotas[index_nota].get("curso", alumno.getCursoAlumno())
-            else:
-                curso = alumno.getCursoAlumno()
-            
-            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(codigo))
-            self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
-            self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso))
-            
-            # Mostrar promedio actualizado
-            if isinstance(promedio, float):
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
-            else:
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
-            
-            # Mostrar estado actualizado
-            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(estado))
-            row_index += 1
+            # Agregar datos a la lista de elementos a mostrar
+            datos_a_mostrar.append({
+                "codigo": codigo,
+                "dni": alumno.getDniAlumno(),
+                "nombre": alumno.getApNomAlumno(),
+                "curso": curso,
+                "promedio": promedio,
+                "estado": estado
+            })
         
-        # Ajustar el número real de filas mostradas
-        self.tblReportes.setRowCount(row_index)
+        # Configurar la tabla con el número correcto de filas
+        self.tblReportes.setRowCount(len(datos_a_mostrar))
+        
+        # Llenar la tabla con los datos
+        for row_index, datos in enumerate(datos_a_mostrar):
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(datos["codigo"]))
+            self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(datos["dni"]))
+            self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(datos["nombre"]))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(datos["curso"]))
+            
+            # Mostrar promedio con formato adecuado
+            if isinstance(datos["promedio"], float):
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{datos['promedio']:.2f}"))
+            else:
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(datos["promedio"])))
+            
+            # Mostrar estado
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(datos["estado"]))
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
@@ -182,7 +192,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
             curso = alumno.getCursoAlumno()
         
         # Obtener promedio actualizado
-        promedio = self.obtenerPromedioActualizado(alumno)
+        promedio = self.obtenerPromedioActualizado(codigo)
         estado = self.obtenerEstadoActualizado(promedio)
         
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
@@ -231,7 +241,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
             curso = alumno.getCursoAlumno()
         
         # Obtener promedio actualizado
-        promedio = self.obtenerPromedioActualizado(alumno)
+        promedio = self.obtenerPromedioActualizado(codigo)
         estado = self.obtenerEstadoActualizado(promedio)
         
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
@@ -288,15 +298,15 @@ class VentanaReportes(QtWidgets.QMainWindow):
                                              QtWidgets.QMessageBox.Ok)
             return
         
-        self.tblReportes.setRowCount(len(alumnos_por_curso))
+        # Lista para almacenar los alumnos que cumplan con los filtros
+        alumnos_filtrados = []
         
-        row_index = 0
         for pos in alumnos_por_curso:
             alumno = aAlum.devolverAlumno(pos)
             codigo = alumno.getCodigoAlumno()
             
             # Obtener promedio actualizado
-            promedio = self.obtenerPromedioActualizado(alumno)
+            promedio = self.obtenerPromedioActualizado(codigo)
             estado = self.obtenerEstadoActualizado(promedio)
             
             # Verificar si el alumno cumple con los filtros de estado
@@ -305,23 +315,34 @@ class VentanaReportes(QtWidgets.QMainWindow):
             if self.rbDesaprobados.isChecked() and estado != "Desaprobado":
                 continue
             
-            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(codigo))
+            # Almacenar datos del alumno que cumple con los filtros
+            alumnos_filtrados.append({
+                "alumno": alumno,
+                "codigo": codigo,
+                "curso": curso_seleccionado,
+                "promedio": promedio,
+                "estado": estado
+            })
+        
+        # Mostrar los alumnos filtrados en la tabla
+        self.tblReportes.setRowCount(len(alumnos_filtrados))
+        
+        for row_index, datos in enumerate(alumnos_filtrados):
+            alumno = datos["alumno"]
+            
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(datos["codigo"]))
             self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
             self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso_seleccionado))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(datos["curso"]))
             
             # Mostrar promedio actualizado
-            if isinstance(promedio, float):
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
+            if isinstance(datos["promedio"], float):
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{datos['promedio']:.2f}"))
             else:
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(datos["promedio"])))
             
             # Mostrar estado actualizado
-            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(estado))
-            row_index += 1
-        
-        # Ajustar el número real de filas mostradas
-        self.tblReportes.setRowCount(row_index)
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(datos["estado"]))
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
