@@ -98,6 +98,7 @@ class ArregloAsistencias():
         archivo.close()
     
     def cargar(self):
+        self.dataAsistencias = [] 
         try:
             archivo = open("Modelo/Asistencias.txt", "r", encoding="UTF-8")
             for linea in archivo.readlines():

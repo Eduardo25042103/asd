@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>464</height>
+    <width>495</width>
+    <height>523</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>70</x>
+      <x>40</x>
       <y>30</y>
       <width>451</width>
       <height>41</height>
@@ -42,7 +42,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>110</y>
+      <y>90</y>
       <width>101</width>
       <height>21</height>
      </rect>
@@ -60,7 +60,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>140</y>
+      <y>110</y>
       <width>161</width>
       <height>20</height>
      </rect>
@@ -70,8 +70,8 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>180</y>
-      <width>51</width>
+      <y>150</y>
+      <width>41</width>
       <height>21</height>
      </rect>
     </property>
@@ -89,8 +89,8 @@
    <widget class="QLineEdit" name="txtDni">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>210</y>
+      <x>20</x>
+      <y>180</y>
       <width>161</width>
       <height>20</height>
      </rect>
@@ -99,8 +99,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>240</y>
+      <x>20</x>
+      <y>220</y>
       <width>181</width>
       <height>31</height>
      </rect>
@@ -119,8 +119,8 @@
    <widget class="QLineEdit" name="txtApNom">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>280</y>
+      <x>20</x>
+      <y>250</y>
       <width>161</width>
       <height>20</height>
      </rect>
@@ -129,8 +129,8 @@
    <widget class="QPushButton" name="btnRegistrar">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>140</y>
+      <x>10</x>
+      <y>320</y>
       <width>101</width>
       <height>41</height>
      </rect>
@@ -149,8 +149,8 @@
    <widget class="QPushButton" name="btnBuscar">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>140</y>
+      <x>130</x>
+      <y>320</y>
       <width>121</width>
       <height>41</height>
      </rect>
@@ -168,8 +168,8 @@
    <widget class="QPushButton" name="btnEliminar">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>200</y>
+      <x>10</x>
+      <y>380</y>
       <width>111</width>
       <height>41</height>
      </rect>
@@ -188,9 +188,9 @@
    <widget class="QPushButton" name="btnLimpiar">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>200</y>
-      <width>101</width>
+      <x>130</x>
+      <y>380</y>
+      <width>111</width>
       <height>41</height>
      </rect>
     </property>
@@ -208,8 +208,8 @@
    <widget class="QPushButton" name="btnSalir">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>270</y>
+      <x>70</x>
+      <y>440</y>
       <width>101</width>
       <height>41</height>
      </rect>
@@ -225,13 +225,33 @@
      <string>Salir</string>
     </property>
    </widget>
+   <widget class="QTableWidget" name="tblDNIs">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>90</y>
+      <width>201</width>
+      <height>381</height>
+     </rect>
+    </property>
+    <column>
+     <property name="text">
+      <string>dni</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>codigo</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>513</width>
+     <width>495</width>
      <height>21</height>
     </rect>
    </property>

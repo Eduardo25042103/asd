@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, uic
 from Controlador.arregloAlumnos import ArregloAlumnos
 from Controlador.alumnos import Alumno
 import os
+from datetime import datetime
 
 # Crear objeto de arreglo de alumnos
 aAlum = ArregloAlumnos()
@@ -27,8 +28,12 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.actionPor_Curso.triggered.connect(self.buscarPorCurso)
         self.actionPor_Estado.triggered.connect(self.filtrarPorEstado)
         self.actionEstadisticas.triggered.connect(self.mostrarEstadisticas)
-        self.actionExportar_a_PDF.triggered.connect(lambda: self.exportarReporte("pdf"))
-        self.actionExportar_a_Excel.triggered.connect(lambda: self.exportarReporte("excel"))
+        # Eliminar o reemplazar los menús de exportación a PDF y Excel
+        if hasattr(self, 'actionExportar_a_PDF'):
+            self.actionExportar_a_PDF.triggered.connect(self.exportarReporte)
+        if hasattr(self, 'actionExportar_a_Excel'):
+            self.actionExportar_a_Excel.setText("Exportar a TXT")
+            self.actionExportar_a_Excel.triggered.connect(self.exportarReporte)
         
         # Radio buttons para filtros
         self.rbTodos.toggled.connect(self.aplicarFiltros)
@@ -62,6 +67,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.limpiarTabla()
         self.tblReportes.setRowCount(aAlum.tamañoArregloAlumnos())
         
+        row_index = 0
         for i in range(aAlum.tamañoArregloAlumnos()):
             alumno = aAlum.devolverAlumno(i)
             
@@ -73,20 +79,24 @@ class VentanaReportes(QtWidgets.QMainWindow):
             
             cursos = alumno.getCursoAlumno()
             
-            self.tblReportes.setItem(i, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
-            self.tblReportes.setItem(i, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
-            self.tblReportes.setItem(i, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(i, 3, QtWidgets.QTableWidgetItem(cursos))
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(cursos))
             
             # Calcular y mostrar promedio
             promedio = alumno.Promedio()
             if isinstance(promedio, float):
-                self.tblReportes.setItem(i, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             else:
-                self.tblReportes.setItem(i, 4, QtWidgets.QTableWidgetItem(promedio))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(promedio))
             
             # Mostrar estado
-            self.tblReportes.setItem(i, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            row_index += 1
+        
+        # Ajustar el número real de filas mostradas
+        self.tblReportes.setRowCount(row_index)
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
@@ -189,7 +199,8 @@ class VentanaReportes(QtWidgets.QMainWindow):
         
         self.tblReportes.setRowCount(len(posiciones))
         
-        for fila, pos in enumerate(posiciones):
+        row_index = 0
+        for pos in posiciones:
             alumno = aAlum.devolverAlumno(pos)
             
             # Verificar si el alumno cumple con los filtros de estado
@@ -198,20 +209,24 @@ class VentanaReportes(QtWidgets.QMainWindow):
             if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
                 continue
             
-            self.tblReportes.setItem(fila, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
-            self.tblReportes.setItem(fila, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
-            self.tblReportes.setItem(fila, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblReportes.setItem(fila, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+            self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(row_index, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
             
             # Calcular y mostrar promedio
             promedio = alumno.Promedio()
             if isinstance(promedio, float):
-                self.tblReportes.setItem(fila, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             else:
-                self.tblReportes.setItem(fila, 4, QtWidgets.QTableWidgetItem(promedio))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(promedio))
             
             # Mostrar estado
-            self.tblReportes.setItem(fila, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            row_index += 1
+        
+        # Ajustar el número real de filas mostradas
+        self.tblReportes.setRowCount(row_index)
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
@@ -247,6 +262,7 @@ class VentanaReportes(QtWidgets.QMainWindow):
         aprobados = 0
         desaprobados = 0
         promedios = []
+        cursos = {}
         
         for i in range(total_alumnos):
             alumno = aAlum.devolverAlumno(i)
@@ -258,5 +274,123 @@ class VentanaReportes(QtWidgets.QMainWindow):
             promedio = alumno.Promedio()
             if isinstance(promedio, float):
                 promedios.append(promedio)
+            
+            # Contar alumnos por curso
+            curso = alumno.getCursoAlumno()
+            if curso in cursos:
+                cursos[curso] += 1
+            else:
+                cursos[curso] = 1
         
-        #
+        # Calcular estadísticas
+        promedio_general = sum(promedios) / len(promedios) if promedios else 0
+        porcentaje_aprobados = (aprobados / total_alumnos) * 100 if total_alumnos > 0 else 0
+        porcentaje_desaprobados = (desaprobados / total_alumnos) * 100 if total_alumnos > 0 else 0
+        
+        # Crear mensaje con las estadísticas
+        mensaje = f"Estadísticas del reporte:\n\n"
+        mensaje += f"Total de alumnos: {total_alumnos}\n"
+        mensaje += f"Alumnos aprobados: {aprobados} ({porcentaje_aprobados:.2f}%)\n"
+        mensaje += f"Alumnos desaprobados: {desaprobados} ({porcentaje_desaprobados:.2f}%)\n"
+        mensaje += f"Promedio general: {promedio_general:.2f}\n\n"
+        
+        mensaje += "Distribución por curso:\n"
+        for curso, cantidad in cursos.items():
+            mensaje += f"- {curso}: {cantidad} alumnos\n"
+        
+        # Mostrar estadísticas en un diálogo
+        QtWidgets.QMessageBox.information(self, "Estadísticas", mensaje, QtWidgets.QMessageBox.Ok)
+    
+    def exportarReporte(self):
+        # Verificar si hay datos para exportar
+        if self.tblReportes.rowCount() == 0:
+            QtWidgets.QMessageBox.warning(self, "Exportar Reporte", 
+                                         "No hay datos para exportar.", 
+                                         QtWidgets.QMessageBox.Ok)
+            return
+        
+        # Generar nombre de archivo con fecha y hora
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        directorio = "Reportes"
+        
+        # Crear directorio si no existe
+        if not os.path.exists(directorio):
+            os.makedirs(directorio)
+        
+        # Exportar a archivo TXT
+        filename = os.path.join(directorio, f"reporte_alumnos_{timestamp}.txt")
+        
+        try:
+            with open(filename, 'w', encoding='utf-8') as archivo:
+                # Escribir encabezado
+                archivo.write("REPORTE DE ALUMNOS\n")
+                archivo.write("=================\n\n")
+                archivo.write(f"Fecha y hora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
+                
+                # Obtener encabezados de la tabla
+                headers = []
+                for columna in range(self.tblReportes.columnCount()):
+                    headers.append(self.tblReportes.horizontalHeaderItem(columna).text())
+                
+                # Escribir encabezados
+                archivo.write(f"{headers[0]:<15} {headers[1]:<12} {headers[2]:<30} {headers[3]:<20} {headers[4]:<10} {headers[5]:<15}\n")
+                archivo.write("-" * 100 + "\n")
+                
+                # Escribir datos
+                for fila in range(self.tblReportes.rowCount()):
+                    linea = ""
+                    for columna in range(self.tblReportes.columnCount()):
+                        item = self.tblReportes.item(fila, columna)
+                        texto = item.text() if item else ""
+                        
+                        # Formatear cada columna según su tipo
+                        if columna == 0:  # Código
+                            linea += f"{texto:<15} "
+                        elif columna == 1:  # DNI
+                            linea += f"{texto:<12} "
+                        elif columna == 2:  # Nombre
+                            linea += f"{texto:<30} "
+                        elif columna == 3:  # Curso
+                            linea += f"{texto:<20} "
+                        elif columna == 4:  # Promedio
+                            linea += f"{texto:<10} "
+                        elif columna == 5:  # Estado
+                            linea += f"{texto:<15} "
+                    
+                    archivo.write(linea + "\n")
+                
+                # Agregar resumen al final
+                archivo.write("\n\nRESUMEN DE DATOS\n")
+                archivo.write("==============\n\n")
+                
+                # Calcular estadísticas
+                total_alumnos = self.tblReportes.rowCount()
+                aprobados = 0
+                promedios = []
+                
+                for fila in range(total_alumnos):
+                    estado = self.tblReportes.item(fila, 5).text() if self.tblReportes.item(fila, 5) else ""
+                    if estado == "Aprobado":
+                        aprobados += 1
+                    
+                    promedio_texto = self.tblReportes.item(fila, 4).text() if self.tblReportes.item(fila, 4) else ""
+                    try:
+                        promedio = float(promedio_texto)
+                        promedios.append(promedio)
+                    except ValueError:
+                        pass
+                
+                promedio_general = sum(promedios) / len(promedios) if promedios else 0
+                
+                archivo.write(f"Total de alumnos en el reporte: {total_alumnos}\n")
+                archivo.write(f"Alumnos aprobados: {aprobados}\n")
+                archivo.write(f"Alumnos desaprobados: {total_alumnos - aprobados}\n")
+                archivo.write(f"Promedio general: {promedio_general:.2f}\n")
+                
+            QtWidgets.QMessageBox.information(self, "Exportar Reporte", 
+                                            f"Reporte exportado exitosamente a:\n{filename}", 
+                                            QtWidgets.QMessageBox.Ok)
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error al Exportar", 
+                                         f"No se pudo exportar el reporte: {str(e)}", 
+                                         QtWidgets.QMessageBox.Ok)

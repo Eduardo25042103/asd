@@ -3,6 +3,7 @@ from PyQt5 import QtGui
 from Vista.ventanaNotas import VentanaNotas
 from Vista.ventanaAsistencias import VentanaAsistencias
 from Vista.ventanaRegistroAlumnos import VentanaRegistroAlumnos
+from Vista.ventanaReportes import VentanaReportes
 
 
 class VentanaPrincipal(QtWidgets.QMainWindow):
@@ -15,6 +16,7 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
         self.btnNotas.clicked.connect(self.abrirVentanaNotas)
         self.btnAsistencias.clicked.connect(self.abrirVentanaAsistencias)
         self.btnRegistroAlumnos.clicked.connect(self.abrirVentanaRegistroAlumnos)
+        self.btnReporte.clicked.connect(self.abrirVentanaReportes)
         self.btnSalir.clicked.connect(self.cerrar)
 
 
@@ -30,7 +32,8 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
         vregistros.show()
 
     def abrirVentanaReportes(self):
-      print()
+        vreportes = VentanaReportes(self)
+        vreportes.show()
 
     def cerrar(self):
         self.close()

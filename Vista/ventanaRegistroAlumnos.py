@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
 from Controlador.arregloAlumnos import ArregloAlumnos
 from Controlador.alumnos import Alumno
 
@@ -8,7 +8,6 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         super(VentanaRegistroAlumnos, self).__init__(parent)
         uic.loadUi('UI/ventanaRegistroAlumnos.ui', self)
         
-
         self.arregloAlumnos = ArregloAlumnos()
         
         self.btnRegistrar.clicked.connect(self.registrarAlumno)
@@ -16,6 +15,29 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         self.btnEliminar.clicked.connect(self.eliminarAlumno)
         self.btnLimpiar.clicked.connect(self.limpiarCampos)
         self.btnSalir.clicked.connect(self.close)
+        
+        # Configurar la tabla de DNIs
+        self.tblDNIs.verticalHeader().setVisible(False)
+        
+        # Cargar los DNIs existentes al iniciar
+        self.cargarTablaDNIs()
+    
+    def cargarTablaDNIs(self):
+        """Carga todos los DNIs de alumnos en la tabla"""
+        # Limpiar tabla
+        self.tblDNIs.setRowCount(0)
+        
+        # Recorrer todos los alumnos
+        for i in range(self.arregloAlumnos.tamañoArregloAlumnos()):
+            alumno = self.arregloAlumnos.devolverAlumno(i)
+            
+            # Añadir fila
+            rowPosition = self.tblDNIs.rowCount()
+            self.tblDNIs.insertRow(rowPosition)
+            
+            # Insertar DNI y código
+            self.tblDNIs.setItem(rowPosition, 0, QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblDNIs.setItem(rowPosition, 1, QTableWidgetItem(alumno.getCodigoAlumno()))
     
     def registrarAlumno(self):
         codigo = self.txtCodigo.text()
@@ -41,6 +63,9 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
         
         QMessageBox.information(self, "Éxito", "Alumno registrado correctamente")
         self.limpiarCampos()
+        
+        # Actualizar la tabla de DNIs
+        self.cargarTablaDNIs()
     
     def buscarAlumno(self):
         codigo = self.txtCodigo.text()
@@ -79,19 +104,20 @@ class VentanaRegistroAlumnos(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "Error", "Alumno no encontrado")
             return
         
-       
         confirmacion = QMessageBox.question(self, "Confirmar eliminación", 
                                           "¿Está seguro de eliminar este alumno?",
                                           QMessageBox.Yes | QMessageBox.No)
         if confirmacion == QMessageBox.No:
             return
         
-        
         self.arregloAlumnos.eliminarAlumno(index)
         self.arregloAlumnos.grabar()
         
         QMessageBox.information(self, "Éxito", "Alumno eliminado correctamente")
         self.limpiarCampos()
+        
+        # Actualizar la tabla de DNIs después de eliminar
+        self.cargarTablaDNIs()
     
     def limpiarCampos(self):
         self.txtCodigo.clear()

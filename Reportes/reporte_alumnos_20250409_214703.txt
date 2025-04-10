@@ -1,0 +1,19 @@
+REPORTE DE ALUMNOS
+=================
+
+Fecha y hora: 09/04/2025 21:47:03
+
+Código          DNI          Ap/Nombres                     Cursos               Promedio   Estado         
+----------------------------------------------------------------------------------------------------
+12              31           3ed                                                 Nota inválida Desaprobado     
+23              2312         asd                                                 Nota inválida Desaprobado     
+32              23           123                                                 Nota inválida Desaprobado     
+
+
+RESUMEN DE DATOS
+==============
+
+Total de alumnos en el reporte: 3
+Alumnos aprobados: 0
+Alumnos desaprobados: 3
+Promedio general: 0.00

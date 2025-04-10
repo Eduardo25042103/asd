@@ -127,6 +127,7 @@ class ArregloAlumnos():
         
     def cargar(self):
         #CARGAR DATOS ALUMNOS.TXT A LISTA DATAALUMNOS
+        self.dataAlumnos = []  
         try:
             archivo = open("Modelo/Alumnos.txt", "r", encoding="UTF-8")
             for linea in archivo.readlines():

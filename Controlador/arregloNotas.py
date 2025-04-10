@@ -75,6 +75,7 @@ class ArregloNotas():
         archivo.close()
     
     def cargar(self):
+        self.dataNotas = [] 
         try:
             archivo = open("Modelo/Notas.txt", "r", encoding="UTF-8")
             for linea in archivo.readlines():
