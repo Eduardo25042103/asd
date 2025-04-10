@@ -1,3 +1,6 @@
+from Controlador.arregloAlumnos import ArregloAlumnos
+
+
 class ArregloAsistencias():
     #ATRIBUTOS
     dataAsistencias = [] #ALMACENAR ASISTENCIAS

@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
 from Controlador.arregloAlumnos import ArregloAlumnos
+from Controlador.arregloAsistencias import ArregloAsistencias
 from datetime import datetime
 
 class VentanaAsistencias(QtWidgets.QMainWindow):
@@ -9,8 +10,9 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         super(VentanaAsistencias, self).__init__(parent)
         uic.loadUi('UI/ventanaAsistencias.ui', self)
         
-        # Inicializar arreglo de alumnos
+        # Inicializar arreglos
         self.arregloAlumnos = ArregloAlumnos()
+        self.arregloAsistencias = ArregloAsistencias()
         
         # Conectar botones con funciones
         self.btnRegistrar.clicked.connect(self.registrarAsistencia)
@@ -50,11 +52,11 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         
         # Obtener alumno
         alumno = self.arregloAlumnos.devolverAlumno(index)
+        codigo = alumno.getCodigoAlumno()
         
         # Registrar asistencia
-        alumno.registrarAsistencia(fecha, estado)
-        self.arregloAlumnos.modificarAlumno(alumno, index)
-        self.arregloAlumnos.grabar()
+        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado)
+        self.arregloAsistencias.grabar()
         
         QMessageBox.information(self, "Éxito", "Asistencia registrada correctamente")
         self.listarAsistencias()
@@ -100,8 +102,8 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         # Limpiar tabla
         self.tblAsistencias.setRowCount(0)
         
-        # Obtener todas las asistencias
-        reporte = self.arregloAlumnos.generarReporteAsistencias()
+        # Generar reporte combinando datos de alumnos y asistencias
+        reporte = self.arregloAsistencias.generarReporteAsistencias()
         
         # Llenar tabla
         for asistencia in reporte:
@@ -119,9 +121,8 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         # Limpiar tabla
         self.tblAsistencias.setRowCount(0)
         
-        # Obtener asistencias del alumno
-        reporte = self.arregloAlumnos.generarReporteAsistencias()
-        reporte = [a for a in reporte if a["codigo"] == codigo]
+        # Generar reporte para el alumno específico
+        reporte = self.arregloAsistencias.generarReporteAsistencias(codigo=codigo)
         
         # Llenar tabla
         for asistencia in reporte:
@@ -150,15 +151,8 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         estado = self.cboEstado.currentText()
         
         # Actualizar asistencia
-        index = self.arregloAlumnos.buscarAlumnoPorCodigo(codigo)
-        if index == -1:
-            QMessageBox.warning(self, "Error", "Alumno no encontrado")
-            return
-        
-        alumno = self.arregloAlumnos.devolverAlumno(index)
-        alumno.registrarAsistencia(fecha, estado)
-        self.arregloAlumnos.modificarAlumno(alumno, index)
-        self.arregloAlumnos.grabar()
+        self.arregloAsistencias.registrarAsistencia(codigo, fecha, estado)
+        self.arregloAsistencias.grabar()
         
         QMessageBox.information(self, "Éxito", "Asistencia actualizada correctamente")
         self.listarAsistencias()
@@ -182,24 +176,12 @@ class VentanaAsistencias(QtWidgets.QMainWindow):
         fecha = self.tblAsistencias.item(fila_seleccionada, 4).text()
         
         # Eliminar asistencia
-        index = self.arregloAlumnos.buscarAlumnoPorCodigo(codigo)
-        if index == -1:
-            QMessageBox.warning(self, "Error", "Alumno no encontrado")
-            return
-        
-        alumno = self.arregloAlumnos.devolverAlumno(index)
-        dictAsistencia = alumno.getDictAsistencia()
-        
-        if fecha in dictAsistencia:
-            del dictAsistencia[fecha]
-            alumno.setDictAsistencia(dictAsistencia)
-            self.arregloAlumnos.modificarAlumno(alumno, index)
-            self.arregloAlumnos.grabar()
-            
+        if self.arregloAsistencias.eliminarAsistencia(codigo, fecha):
+            self.arregloAsistencias.grabar()
             QMessageBox.information(self, "Éxito", "Asistencia eliminada correctamente")
             self.listarAsistencias()
         else:
-            QMessageBox.warning(self, "Error", "No se encontró la asistencia especificada")
+            QMessageBox.warning(self, "Error", "No se pudo eliminar la asistencia")
     
     def limpiarCampos(self):
         self.txtCodigo.clear()

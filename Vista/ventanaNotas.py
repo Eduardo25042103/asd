@@ -1,11 +1,10 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
 from Controlador.arregloAlumnos import ArregloAlumnos
 from Controlador.arregloNotas import ArregloNotas
-from Controlador.alumnos import Alumno
 
 class VentanaNotas(QtWidgets.QMainWindow):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super(VentanaNotas, self).__init__(parent)
         uic.loadUi("UI/ventanaNotas.ui", self)
         
@@ -20,11 +19,11 @@ class VentanaNotas(QtWidgets.QMainWindow):
         self.btnListar.clicked.connect(self.listar)
         self.btnModificar.clicked.connect(self.modificar)
         self.btnQuitar.clicked.connect(self.quitar)
+        self.btnSalir.clicked.connect(self.close)
         
         # Cargar datos iniciales
         self.listar()
     
-    # Método para listar que combine datos de alumnos y notas
     def listar(self):
         self.limpiarTabla()
         
@@ -41,10 +40,10 @@ class VentanaNotas(QtWidgets.QMainWindow):
             self.tblNotas.insertRow(row)
             
             # Datos básicos del alumno
-            self.tblNotas.setItem(row, 0, QtWidgets.QTableWidgetItem(codigo))
-            self.tblNotas.setItem(row, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
-            self.tblNotas.setItem(row, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblNotas.setItem(row, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+            self.tblNotas.setItem(row, 0, QTableWidgetItem(codigo))
+            self.tblNotas.setItem(row, 1, QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblNotas.setItem(row, 2, QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblNotas.setItem(row, 3, QTableWidgetItem(alumno.getCursoAlumno()))
             
             # Notas (si existen)
             if index_nota != -1:
@@ -57,21 +56,22 @@ class VentanaNotas(QtWidgets.QMainWindow):
                 promedio = self.arregloNotas.calcularPromedio(ec1, ec2, ec3, exf)
                 estado = self.arregloNotas.determinarEstado(promedio)
                 
-                self.tblNotas.setItem(row, 4, QtWidgets.QTableWidgetItem(ec1))
-                self.tblNotas.setItem(row, 5, QtWidgets.QTableWidgetItem(ec2))
-                self.tblNotas.setItem(row, 6, QtWidgets.QTableWidgetItem(ec3))
-                self.tblNotas.setItem(row, 7, QtWidgets.QTableWidgetItem(exf))
-                self.tblNotas.setItem(row, 8, QtWidgets.QTableWidgetItem(str(promedio)))
-                self.tblNotas.setItem(row, 9, QtWidgets.QTableWidgetItem(estado))
+                self.tblNotas.setItem(row, 4, QTableWidgetItem(ec1))
+                self.tblNotas.setItem(row, 5, QTableWidgetItem(ec2))
+                self.tblNotas.setItem(row, 6, QTableWidgetItem(ec3))
+                self.tblNotas.setItem(row, 7, QTableWidgetItem(exf))
+                self.tblNotas.setItem(row, 8, QTableWidgetItem(str(promedio)))
+                self.tblNotas.setItem(row, 9, QTableWidgetItem(estado))
             else:
                 # No hay notas registradas
-                self.tblNotas.setItem(row, 4, QtWidgets.QTableWidgetItem(""))
-                self.tblNotas.setItem(row, 5, QtWidgets.QTableWidgetItem(""))
-                self.tblNotas.setItem(row, 6, QtWidgets.QTableWidgetItem(""))
-                self.tblNotas.setItem(row, 7, QtWidgets.QTableWidgetItem(""))
-                self.tblNotas.setItem(row, 8, QtWidgets.QTableWidgetItem("Sin notas"))
-                self.tblNotas.setItem(row, 9, QtWidgets.QTableWidgetItem("Sin notas"))
-            
+                for col in range(4, 8):
+                    self.tblNotas.setItem(row, col, QTableWidgetItem(""))
+                self.tblNotas.setItem(row, 8, QTableWidgetItem("Sin notas"))
+                self.tblNotas.setItem(row, 9, QTableWidgetItem("Sin notas"))
+    
+    def limpiarTabla(self):
+        self.tblNotas.setRowCount(0)
+    
     def limpiarControles(self):
         self.txtCodigo.clear()
         self.txtDni.clear()
@@ -82,115 +82,200 @@ class VentanaNotas(QtWidgets.QMainWindow):
         self.txtEC3.clear()
         self.txtEF.clear()
 
+    def obtenerCodigo(self):
+        return self.txtCodigo.text()
+    
+    def obtenerDni(self):
+        return self.txtDni.text()
+    
+    def obtenerApNom(self):
+        return self.txtApNom.text()
+    
+    def obtenerCurso(self):
+        return self.cboCurso.currentText()
+    
+    def obtenerEC1(self):
+        return self.txtEC1.text()
+    
+    def obtenerEC2(self):
+        return self.txtEC2.text()
+    
+    def obtenerEC3(self):
+        return self.txtEC3.text()
+    
+    def obtenerEF(self):
+        return self.txtEF.text()
+    
+    def valida(self):
+        if self.obtenerCodigo() == "":
+            return "Código"
+        if self.obtenerDni() == "":
+            return "DNI"
+        if self.obtenerApNom() == "":
+            return "Apellidos y Nombres"
+        if self.obtenerEC1() == "":
+            return "EC1"
+        if self.obtenerEC2() == "":
+            return "EC2"
+        if self.obtenerEC3() == "":
+            return "EC3"
+        if self.obtenerEF() == "":
+            return "Examen Final"
+        return ""
 
     def registrar(self):
-            if self.valida() == "":
-                objAlumno= Alumno(self.obtenerCodigo(), self.obtenerDni(),
-                                self.obtenerApNom(),
-                                self.obtenerCurso(),
-                                self.obtenerEC1(),
-                                self.obtenerEC2(),
-                                self.obtenerEC3(),
-                                self.obtenerEF())
-                dni=self.obtenerDni()
-                curso=self.obtenerCurso()
-                if aAlum.buscarAlumno(dni) == -1:
-                    aAlum.adicionaAlumnos(objAlumno)
-                    aAlum.grabar() 
-                    self.limpiarControles()
-                    self.listar()
-                else:
-                    if aAlum.buscarCurso(curso) != objAlumno.getCursoAlumno():
-                        aAlum.adicionaAlumnos(objAlumno)
-                        aAlum.grabar() 
-                        self.limpiarControles()
-                        self.listar()
-                    else:
-                        QtWidgets.QMessageBox.information(self, "Registrar Cliente",
-                                                    "El DNI ingresado ya existe con el curso... !!!",
-                                                    QtWidgets.QMessageBox.Ok)
+        if self.valida() == "":
+            codigo = self.obtenerCodigo()
+            dni = self.obtenerDni()
+            apNom = self.obtenerApNom()
+            curso = self.obtenerCurso()
+            ec1 = self.obtenerEC1()
+            ec2 = self.obtenerEC2()
+            ec3 = self.obtenerEC3()
+            exf = self.obtenerEF()
+            
+            # Verificar si el alumno existe
+            index_alumno = self.arregloAlumnos.buscarAlumnoPorCodigo(codigo)
+            if index_alumno == -1:
+                # Si no existe, mostramos mensaje
+                QMessageBox.warning(self, "Registrar Notas", 
+                                "El alumno no existe. Regístrelo primero.", 
+                                QMessageBox.Ok)
+                return
+            
+            # Registrar/actualizar notas
+            if self.arregloNotas.buscarNotaPorCodigo(codigo) != -1:
+                self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf)
             else:
-                QtWidgets.QMessageBox.information(self, "Registrar Cliente",
-                                                    "Error en " + self.valida(), QtWidgets.QMessageBox.Ok)
+                self.arregloNotas.adicionaNota(codigo, ec1, ec2, ec3, exf)
+            
+            self.arregloNotas.grabar()
+            QMessageBox.information(self, "Registrar Notas", 
+                                "Notas registradas correctamente", 
+                                QMessageBox.Ok)
+            self.limpiarControles()
+            self.listar()
+        else:
+            QMessageBox.information(self, "Registrar Notas",
+                                "Error en " + self.valida(), QMessageBox.Ok)
     
     def consultar(self):
-        #self.limpiarTabla()
-        if aAlum.tamañoArregloAlumnos() == 0:
-                QtWidgets.QMessageBox.information(self, "Consultar Cliente",
-                                                  "No existe clientes a consultar... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
+        if self.arregloAlumnos.tamañoArregloAlumnos() == 0:
+            QMessageBox.information(self, "Consultar Notas",
+                                    "No existen alumnos a consultar", 
+                                    QMessageBox.Ok)
         else:
-            dni, _ = QtWidgets.QInputDialog.getText(self, "Consultar Cliente",
-                                                  "Ingrese el DNI a consultar")
-            index = aAlum.buscarAlumno(dni)
-            if index == -1:
-                QtWidgets.QMessageBox.information(self, "Consultar Cliente",
-                                                  "El DNI ingresado no existe... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
-            else:
-                self.txtCodigo.setText(aAlum.devolverAlumno(index).getCodigoAlumno())
-                self.txtDni.setText(aAlum.devolverAlumno(index).getDniAlumno())
-                self.txtApNom.setText(aAlum.devolverAlumno(index).getApNomAlumno())
-                word = aAlum.devolverAlumno(index).getCursoAlumno()
-                pos = self.cboCurso.findText(word)
-                self.cboCurso.setCurrentIndex(pos)
-                self.txtEC1.setText(aAlum.devolverAlumno(index).getEC1Alumno())
-                self.txtEC2.setText(aAlum.devolverAlumno(index).getEC2Alumno())
-                self.txtEC2.setText(aAlum.devolverAlumno(index).getEC3Alumno())
-                self.txtEF.setText(aAlum.devolverAlumno(index).getEXFAlumno())
-
-               
+            codigo, ok = QtWidgets.QInputDialog.getText(self, "Consultar Notas",
+                                                "Ingrese el código del alumno")
+            if ok:
+                index_alumno = self.arregloAlumnos.buscarAlumnoPorCodigo(codigo)
+                if index_alumno == -1:
+                    QMessageBox.information(self, "Consultar Notas",
+                                          "El código ingresado no existe", 
+                                          QMessageBox.Ok)
+                    return
+                
+                alumno = self.arregloAlumnos.devolverAlumno(index_alumno)
+                self.txtCodigo.setText(alumno.getCodigoAlumno())
+                self.txtDni.setText(alumno.getDniAlumno())
+                self.txtApNom.setText(alumno.getApNomAlumno())
+                
+                # Seleccionar curso en combobox
+                index_curso = self.cboCurso.findText(alumno.getCursoAlumno())
+                if index_curso != -1:
+                    self.cboCurso.setCurrentIndex(index_curso)
+                
+                # Mostrar notas si existen
+                index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+                if index_nota != -1:
+                    nota = self.arregloNotas.dataNotas[index_nota]
+                    self.txtEC1.setText(nota["ec1"])
+                    self.txtEC2.setText(nota["ec2"])
+                    self.txtEC3.setText(nota["ec3"])
+                    self.txtEF.setText(nota["exf"])
+    
     def eliminar(self):
-        if self.obtenerDni() == "":
-            QtWidgets.QMessageBox.information(self, "Consultar Cliente",
-                                              "Por favor Consultar el Cliente...!!!",
-                                               QtWidgets.QMessageBox.Ok)
-        else:
-            dni = self.txtDni.text()
-            index = aAlum.buscarAlumno(dni)
-            aAlum.eliminarAlumno(index)
-            aAlum.grabar() 
+        codigo = self.obtenerCodigo()
+        if codigo == "":
+            QMessageBox.information(self, "Eliminar Notas",
+                                    "Primero debe consultar un alumno", 
+                                    QMessageBox.Ok)
+            return
+        
+        index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+        if index_nota == -1:
+            QMessageBox.information(self, "Eliminar Notas",
+                                  "El alumno no tiene notas registradas", 
+                                  QMessageBox.Ok)
+            return
+        
+        confirmacion = QMessageBox.question(self, "Eliminar Notas", 
+                                           "¿Está seguro de eliminar las notas?", 
+                                           QMessageBox.Yes | QMessageBox.No)
+        if confirmacion == QMessageBox.Yes:
+            self.arregloNotas.eliminarNota(codigo)
+            self.arregloNotas.grabar()
+            QMessageBox.information(self, "Eliminar Notas",
+                                    "Notas eliminadas correctamente", 
+                                    QMessageBox.Ok)
             self.limpiarControles()
             self.listar()
 
     def quitar(self):
-        if aAlum.tamañoArregloAlumnos() ==0:
-            QtWidgets.QMessageBox.information(self, "Eliminar Cliente",
-                                              "No existe clientes a eliminar... !!!",
-                                              QtWidgets.QMessageBox.Ok)
-        else:
-            fila=self.tblNotas.selectedItems()
-            if fila:
-                indiceFila=fila[0].row()
-                dni=self.tblNotas.item(indiceFila, 0).text()
-                index =aAlum.buscarAlumno(dni)
-                aAlum.eliminarAlumno(index)
-                aAlum.grabar() 
-                self.limpiarTabla()
-                self.listar()
-            else:
-                QtWidgets.QMessageBox.information(self, "Eliminar Cliente",
-                                                  "Debe seleccionar una fila... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
+        if self.arregloAlumnos.tamañoArregloAlumnos() == 0:
+            QMessageBox.information(self, "Eliminar Notas",
+                                    "No hay alumnos registrados", 
+                                    QMessageBox.Ok)
+            return
+        
+        fila = self.tblNotas.selectedItems()
+        if not fila:
+            QMessageBox.information(self, "Eliminar Notas",
+                                    "Debe seleccionar una fila", 
+                                    QMessageBox.Ok)
+            return
+        
+        indiceFila = fila[0].row()
+        codigo = self.tblNotas.item(indiceFila, 0).text()
+        
+        index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+        if index_nota == -1:
+            QMessageBox.information(self, "Eliminar Notas",
+                                  "El alumno no tiene notas registradas", 
+                                  QMessageBox.Ok)
+            return
+        
+        confirmacion = QMessageBox.question(self, "Eliminar Notas", 
+                                           "¿Está seguro de eliminar las notas?", 
+                                           QMessageBox.Yes | QMessageBox.No)
+        if confirmacion == QMessageBox.Yes:
+            self.arregloNotas.eliminarNota(codigo)
+            self.arregloNotas.grabar()
+            self.listar()
 
     def modificar(self):
-        if aAlum.tamañoArregloAlumnos() == 0:
-            QtWidgets.QMessageBox.information(self, "Modificar Cliente",
-                                                  "No existen clientes a Modificar... !!!",
-						                           QtWidgets.QMessageBox.Ok)
+        if self.valida() == "":
+            codigo = self.obtenerCodigo()
+            ec1 = self.obtenerEC1()
+            ec2 = self.obtenerEC2()
+            ec3 = self.obtenerEC3()
+            exf = self.obtenerEF()
+            
+            index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+            if index_nota == -1:
+                QMessageBox.information(self, "Modificar Notas",
+                                      "No existen notas para este alumno. Use Registrar", 
+                                      QMessageBox.Ok)
+                return
+            
+            self.arregloNotas.actualizarNota(codigo, ec1, ec2, ec3, exf)
+            self.arregloNotas.grabar()
+            
+            QMessageBox.information(self, "Modificar Notas",
+                                    "Notas modificadas correctamente", 
+                                    QMessageBox.Ok)
+            self.limpiarControles()
+            self.listar()
         else:
-            dni= self.obtenerDni()
-            index= aAlum.buscarAlumno(dni)
-            if index != -1:
-                objAlumno= Alumno(self.obtenerCodigo(), self.obtenerDni(),
-                                self.obtenerApNom(),
-                                self.obtenerCurso(),
-                                self.obtenerEC1(),
-                                self.obtenerEC2(),
-                                self.obtenerEC3(),
-                                self.obtenerEF())   
-                aAlum.modificarAlumno(objAlumno, index)
-                aAlum.grabar() 
-                self.limpiarControles()
-                self.listar()
-
+            QMessageBox.information(self, "Modificar Notas",
+                                    "Error en " + self.valida(), QMessageBox.Ok)
