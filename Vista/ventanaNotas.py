@@ -27,27 +27,27 @@ class VentanaNotas(QtWidgets.QMainWindow):
     def listar(self):
         self.limpiarTabla()
         
-        # Iterar por todos los alumnos
-        for i in range(self.arregloAlumnos.tamañoArregloAlumnos()):
-            alumno = self.arregloAlumnos.devolverAlumno(i)
-            codigo = alumno.getCodigoAlumno()
+        # Mostrar solo alumnos con notas
+        for nota in self.arregloNotas.dataNotas:
+            codigo = nota["codigo"]
             
-            # Buscar notas del alumno
-            index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+            # Buscar alumno por código
+            index_alumno = self.arregloAlumnos.buscarAlumnoPorCodigo(codigo)
             
-            # Preparar datos para mostrar
-            row = self.tblNotas.rowCount()
-            self.tblNotas.insertRow(row)
-            
-            # Datos básicos del alumno
-            self.tblNotas.setItem(row, 0, QTableWidgetItem(codigo))
-            self.tblNotas.setItem(row, 1, QTableWidgetItem(alumno.getDniAlumno()))
-            self.tblNotas.setItem(row, 2, QTableWidgetItem(alumno.getApNomAlumno()))
-            self.tblNotas.setItem(row, 3, QTableWidgetItem(alumno.getCursoAlumno()))
-            
-            # Notas (si existen)
-            if index_nota != -1:
-                nota = self.arregloNotas.dataNotas[index_nota]
+            if index_alumno != -1:  # Si el alumno existe
+                alumno = self.arregloAlumnos.devolverAlumno(index_alumno)
+                
+                # Preparar datos para mostrar
+                row = self.tblNotas.rowCount()
+                self.tblNotas.insertRow(row)
+                
+                # Datos básicos del alumno
+                self.tblNotas.setItem(row, 0, QTableWidgetItem(codigo))
+                self.tblNotas.setItem(row, 1, QTableWidgetItem(alumno.getDniAlumno()))
+                self.tblNotas.setItem(row, 2, QTableWidgetItem(alumno.getApNomAlumno()))
+                self.tblNotas.setItem(row, 3, QTableWidgetItem(alumno.getCursoAlumno()))
+                
+                # Notas
                 ec1 = nota["ec1"]
                 ec2 = nota["ec2"]
                 ec3 = nota["ec3"]
@@ -62,12 +62,6 @@ class VentanaNotas(QtWidgets.QMainWindow):
                 self.tblNotas.setItem(row, 7, QTableWidgetItem(exf))
                 self.tblNotas.setItem(row, 8, QTableWidgetItem(str(promedio)))
                 self.tblNotas.setItem(row, 9, QTableWidgetItem(estado))
-            else:
-                # No hay notas registradas
-                for col in range(4, 8):
-                    self.tblNotas.setItem(row, col, QTableWidgetItem(""))
-                self.tblNotas.setItem(row, 8, QTableWidgetItem("Sin notas"))
-                self.tblNotas.setItem(row, 9, QTableWidgetItem("Sin notas"))
     
     def limpiarTabla(self):
         self.tblNotas.setRowCount(0)

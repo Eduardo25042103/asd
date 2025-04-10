@@ -1,230 +1,262 @@
 from PyQt5 import QtWidgets, uic
-from Controlador.arregloProductos import ArregloProductos
-from Controlador.productos import producto
+from Controlador.arregloAlumnos import ArregloAlumnos
+from Controlador.alumnos import Alumno
+import os
 
-#CREAR OBJETO APRO
-aPro = ArregloProductos()
+# Crear objeto de arreglo de alumnos
+aAlum = ArregloAlumnos()
 
-class VentanaProductos(QtWidgets.QMainWindow):
-    def __init__(self, parent = None):
-        super(VentanaProductos,self).__init__(parent)
-        uic.loadUi("UI/ventanaProductos.ui", self)
-        #self.show()
-    
-        #Eventos
-        #self.Carga_Productoss()
-        self.btnRegistrar.clicked.connect(self.registrar)
-        self.btnConsultar.clicked.connect(self.consultar)
-        self.btnEliminar.clicked.connect(self.eliminar)
-        self.btnListar.clicked.connect(self.listar)
-        self.btnModificar.clicked.connect(self.modificar)
-        self.btnQuitar.clicked.connect(self.quitar)
+class VentanaReportes(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super(VentanaReportes, self).__init__(parent)
+        uic.loadUi("UI/ventanaReportes.ui", self)
         
-#es necesario tener algunos métodos a partir de aqui
-    def Carga_Productos(self):
-        if aPro.tamañoArregloProducto()==0:
-            objCli= producto("")
-            aPro.adicionaProductos(objCli)
-            self.listar()
-        else:
-            self.listar()
-
+        # Eventos de botones
+        self.btnSalir.clicked.connect(self.close)
+        self.btnBuscarDNI.clicked.connect(self.buscarPorDNI)
+        self.btnBuscarCurso.clicked.connect(self.buscarPorCurso)
+        self.btnBuscarCodigo.clicked.connect(self.buscarPorCodigo)
+        self.btnListarTodos.clicked.connect(self.listarTodos)
+        self.btnEstadisticas.clicked.connect(self.mostrarEstadisticas)
+        self.btnExportar.clicked.connect(self.exportarReporte)
+        self.btnLimpiar.clicked.connect(self.limpiarFiltros)
+        
+        # Conectar acciones del menú
+        self.actionSalir.triggered.connect(self.close)
+        self.actionListado_General.triggered.connect(self.listarTodos)
+        self.actionPor_Curso.triggered.connect(self.buscarPorCurso)
+        self.actionPor_Estado.triggered.connect(self.filtrarPorEstado)
+        self.actionEstadisticas.triggered.connect(self.mostrarEstadisticas)
+        self.actionExportar_a_PDF.triggered.connect(lambda: self.exportarReporte("pdf"))
+        self.actionExportar_a_Excel.triggered.connect(lambda: self.exportarReporte("excel"))
+        
+        # Radio buttons para filtros
+        self.rbTodos.toggled.connect(self.aplicarFiltros)
+        self.rbAprobados.toggled.connect(self.aplicarFiltros)
+        self.rbDesaprobados.toggled.connect(self.aplicarFiltros)
+        
+        # Cargar datos al iniciar
+        self.listarTodos()
+    
     def obtenerCodigo(self):
         return self.txtCodigo.text()
     
-    def obtenerNombres(self):
-        return self.txtNombre.text()
-
-    def obtenerDescripcion(self):
-        return self.txtDescripcion.text()
-
-    def obtenerStockMinimo(self):
-        return self.txtStockMinimo.text()
-
-    def obtenerStockActual(self):
-        return self.txtStockActual.text()
-
-    def obtenerPrecioCosto(self):
-        return self.txtPrecioCosto.text()
+    def obtenerDNI(self):
+        return self.txtDni.text()
     
-    def obtenerPrecioVenta(self):
-        return self.txtPrecioVenta.text()
+    def obtenerCurso(self):
+        return self.cboCurso.currentText()
     
-    def obtenerProveedor(self):
-        return self.cboProveedor.currentText()
-    
-    def obtenerAlmacen(self):
-        return self.cboAlmacen.currentText()
-
     def limpiarTabla(self):
-        self.tblProductos.clearContents()
-        self.tblProductos.setRowCount(0)
-
-    def valida(self):
-        if self.txtCodigo.text() =="":
-            self.txtCodigo.setfocus()
-            return "Codigo del Productos...!!!"
-        elif self.txtNombre.text()=="":
-            self.txtNombre.setfocus()
-            return "Nombre del Producto...!!!"
-        elif self.txtDescripcion.text()=="":
-            self.txtDescripcion.setfocus()
-            return "Descripcion del Producto...!!!"
-        elif self.txtStockMinimo.text()=="":
-            self.txtStockMinimo.setfocus()
-            return "Stock Minimo del Producto...!!!"
-        elif self.txtStockActual.text()=="":
-            self.txtStockActual.setfocus()
-            return "Stock Actual del Producto...!!!"
-        elif self.txtPrecioCosto.text()=="":
-            self.txtPrecioCosto.setfocus()
-            return "Precio Costo del Producto...!!!"
-        elif self.txtPrecioVenta.text()=="":
-            self.txtPrecioVenta.setfocus()
-            return "Precio Venta del Producto...!!!"
-        elif self.cboProveedor.currentText()=="":
-            self.cboProveedor.setfocus()
-            return "Proveedor del producto...!!!"
-        elif self.cboAlmacen.currentText()=="":
-            self.cboAlmacen.setfocus()
-            return "Proveedor del producto...!!!"
-        else:
-            return ""
-
-    def listar(self):
-        self.tblProductos.setRowCount(aPro.tamañoArregloProducto())
-        self.tblProductos.setColumnCount(9)
-        #Cabecera
-        self.tblProductos.verticalHeader().setVisible(False)
-        for i in range (0, aPro.tamañoArregloProducto()):
-            self.tblProductos.setItem(i, 0, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getCodProducto()))
-            self.tblProductos.setItem(i, 1, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getNombreProducto()))
-            self.tblProductos.setItem(i, 2, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getDescripcionProducto()))
-            self.tblProductos.setItem(i, 3, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getStockMinimo()))
-            self.tblProductos.setItem(i, 4, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getStockActual()))
-            self.tblProductos.setItem(i, 5, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getPrecioCosto()))
-            self.tblProductos.setItem(i, 6, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getPrecioVenta()))
-            self.tblProductos.setItem(i, 7, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getProveedor()))
-            self.tblProductos.setItem(i, 8, QtWidgets.QTableWidgetItem(aPro.devolverProducto(i).getAlmacen()))
-
-    def limpiarControles(self):
+        self.tblReportes.clearContents()
+        self.tblReportes.setRowCount(0)
+    
+    def limpiarFiltros(self):
         self.txtCodigo.clear()
-        self.txtNombre.clear()
-        self.txtDescripcion.clear()
-        self.txtStockMinimo.clear()
-        self.txtStockActual.clear()
-        self.txtPrecioCosto.clear()
-        self.txtPrecioVenta.clear()
-        self.cboProveedor.setCurrentIndex(0)
-        self.cboAlmacen.setCurrentIndex(0)
-        #Mantenimiento (Grabar, Registrar, Consultar, Modificar, Listar y Quitar)
+        self.txtDni.clear()
+        self.cboCurso.setCurrentIndex(0)
+        self.rbTodos.setChecked(True)
+        self.listarTodos()
     
-#Grabar datos
-    def registrar(self):
-            if self.valida() == "":
-                objCli= producto(self.obtenerCodigo(), self.obtenerNombres(),
-                                self.obtenerDescripcion(), self.obtenerStockMinimo(),
-                                self.obtenerStockActual(), self.obtenerPrecioCosto(),
-                                self.obtenerPrecioVenta(), self.obtenerProveedor(),
-                                self.obtenerAlmacen())
-                codigo=self.obtenerCodigo()
-                if aPro.buscarProducto(codigo) == -1:
-                    aPro.adicionaProductos(objCli)
-                    aPro.grabar() #--> los datos ya se están grabando en los archivos
-                    self.limpiarControles()
-                    self.listar()
-                else:
-                    QtWidgets.QMessageBox.information(self, "Registrar Productos",
-                                                    "El codigo ingresado ya existe... !!!",
-                                                    QtWidgets.QMessageBox.Ok)
+    def listarTodos(self):
+        self.limpiarTabla()
+        self.tblReportes.setRowCount(aAlum.tamañoArregloAlumnos())
+        
+        for i in range(aAlum.tamañoArregloAlumnos()):
+            alumno = aAlum.devolverAlumno(i)
+            
+            # Verificar si el alumno cumple con los filtros de estado
+            if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
+                continue
+            if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
+                continue
+            
+            cursos = alumno.getCursoAlumno()
+            
+            self.tblReportes.setItem(i, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(i, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblReportes.setItem(i, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblReportes.setItem(i, 3, QtWidgets.QTableWidgetItem(cursos))
+            
+            # Calcular y mostrar promedio
+            promedio = alumno.Promedio()
+            if isinstance(promedio, float):
+                self.tblReportes.setItem(i, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             else:
-                QtWidgets.QMessageBox.information(self, "Registrar Productos",
-                                                    "Error en " + self.valida(), QtWidgets.QMessageBox.Ok)
+                self.tblReportes.setItem(i, 4, QtWidgets.QTableWidgetItem(promedio))
+            
+            # Mostrar estado
+            self.tblReportes.setItem(i, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        
+        # Ajustar tamaño de las columnas
+        self.tblReportes.resizeColumnsToContents()
     
-    def consultar(self):
-        #self.limpiarTabla()
-        if aPro.tamañoArregloProducto() == 0:
-                QtWidgets.QMessageBox.information(self, "Consultar Productos",
-                                                  "No existe Productoss a consultar... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
+    def buscarPorDNI(self):
+        self.limpiarTabla()
+        dni = self.obtenerDNI()
+        
+        if dni == "":
+            QtWidgets.QMessageBox.warning(self, "Buscar Alumno", 
+                                         "Por favor ingrese un DNI para buscar", 
+                                         QtWidgets.QMessageBox.Ok)
+            return
+        
+        pos = aAlum.buscarAlumno(dni)
+        
+        if pos == -1:
+            QtWidgets.QMessageBox.information(self, "Buscar Alumno", 
+                                             "No se encontró ningún alumno con el DNI: " + dni, 
+                                             QtWidgets.QMessageBox.Ok)
+            return
+        
+        alumno = aAlum.devolverAlumno(pos)
+        self.tblReportes.setRowCount(1)
+        
+        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+        self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+        self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+        
+        # Calcular y mostrar promedio
+        promedio = alumno.Promedio()
+        if isinstance(promedio, float):
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
         else:
-            codigo, _ = QtWidgets.QInputDialog.getText(self, "Consultar Productos",
-                                                  "Ingrese el codigo a consultar")
-            pos = aPro.buscarProducto(codigo)
-            if pos == -1:
-                QtWidgets.QMessageBox.information(self, "Consultar Productos",
-                                                  "El codigo ingresado no existe... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(promedio))
+        
+        # Mostrar estado
+        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        
+        # Ajustar tamaño de las columnas
+        self.tblReportes.resizeColumnsToContents()
+    
+    def buscarPorCodigo(self):
+        self.limpiarTabla()
+        codigo = self.obtenerCodigo()
+        
+        if codigo == "":
+            QtWidgets.QMessageBox.warning(self, "Buscar Alumno", 
+                                         "Por favor ingrese un código para buscar", 
+                                         QtWidgets.QMessageBox.Ok)
+            return
+        
+        pos = aAlum.buscarAlumnoPorCodigo(codigo)
+        
+        if pos == -1:
+            QtWidgets.QMessageBox.information(self, "Buscar Alumno", 
+                                             "No se encontró ningún alumno con el código: " + codigo, 
+                                             QtWidgets.QMessageBox.Ok)
+            return
+        
+        alumno = aAlum.devolverAlumno(pos)
+        self.tblReportes.setRowCount(1)
+        
+        self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+        self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+        self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+        self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+        
+        # Calcular y mostrar promedio
+        promedio = alumno.Promedio()
+        if isinstance(promedio, float):
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+        else:
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(promedio))
+        
+        # Mostrar estado
+        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        
+        # Ajustar tamaño de las columnas
+        self.tblReportes.resizeColumnsToContents()
+    
+    def buscarPorCurso(self):
+        self.limpiarTabla()
+        curso = self.obtenerCurso()
+        
+        if curso == "[Seleccionar]":
+            QtWidgets.QMessageBox.warning(self, "Buscar Alumnos", 
+                                         "Por favor seleccione un curso", 
+                                         QtWidgets.QMessageBox.Ok)
+            return
+        
+        posiciones = aAlum.buscarCurso(curso)
+        
+        if not posiciones:
+            QtWidgets.QMessageBox.information(self, "Buscar Alumnos", 
+                                             "No se encontraron alumnos en el curso: " + curso, 
+                                             QtWidgets.QMessageBox.Ok)
+            return
+        
+        self.tblReportes.setRowCount(len(posiciones))
+        
+        for fila, pos in enumerate(posiciones):
+            alumno = aAlum.devolverAlumno(pos)
+            
+            # Verificar si el alumno cumple con los filtros de estado
+            if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
+                continue
+            if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
+                continue
+            
+            self.tblReportes.setItem(fila, 0, QtWidgets.QTableWidgetItem(alumno.getCodigoAlumno()))
+            self.tblReportes.setItem(fila, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblReportes.setItem(fila, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblReportes.setItem(fila, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+            
+            # Calcular y mostrar promedio
+            promedio = alumno.Promedio()
+            if isinstance(promedio, float):
+                self.tblReportes.setItem(fila, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             else:
-                self.txtCodigo.setText(aPro.devolverProducto(pos).getCodProducto())
-                self.txtNombre.setText(aPro.devolverProducto(pos).getNombreProducto())
-                self.txtDescripcion.setText(aPro.devolverProducto(pos).getDescripcionProducto())
-                self.txtStockMinimo.setText(aPro.devolverProducto(pos).getStockMinimo())
-                self.txtStockActual.setText(aPro.devolverProducto(pos).getStockActual())
-                self.txtPrecioCosto.setText(aPro.devolverProducto(pos).getPrecioCosto())
-                self.txtPrecioVenta.setText(aPro.devolverProducto(pos).getPrecioVenta())
-                self.cboProveedor.setCurrentText(aPro.devolverProducto(pos).getProveedor())
-                self.cboAlmacen.setCurrentText(aPro.devolverProducto(pos).getAlmacen())
-                
-               #self.tblProductos.setRowCount(1)
-               #self.tblProductos.setItem(0,0, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getCodProducto()))
-               #self.tblProductos.setItem(0,1, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getNombreProducto()))
-               #self.tblProductos.setItem(0,2, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getDescripcionProducto()))
-               #self.tblProductos.setItem(0,3, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getStockMinimo()))
-               #self.tblProductos.setItem(0,4, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getStockActual()))
-               #self.tblProductos.setItem(0,5, QtWidgets.QTableWidgetItem(aPro.devolverProducto(pos).getPrecioCosto()))
-
-#Eliminar datos
-    def eliminar(self):
-        if self.obtenerCodigo() == "":
-            QtWidgets.QMessageBox.information(self, "Consultar Productos",
-                                              "Por favor Consultar el Productos...!!!",
-                                               QtWidgets.QMessageBox.Ok)
+                self.tblReportes.setItem(fila, 4, QtWidgets.QTableWidgetItem(promedio))
+            
+            # Mostrar estado
+            self.tblReportes.setItem(fila, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        
+        # Ajustar tamaño de las columnas
+        self.tblReportes.resizeColumnsToContents()
+    
+    def aplicarFiltros(self):
+        # Si hay búsqueda específica por DNI o código, no aplicar filtros
+        if self.obtenerDNI() != "" or self.obtenerCodigo() != "":
+            return
+        
+        # Si hay filtro por curso, aplicar sobre esa búsqueda
+        if self.obtenerCurso() != "[Seleccionar]":
+            self.buscarPorCurso()
         else:
-            codigo = self.txtCodigo.text()
-            pos = aPro.buscarProducto(codigo)
-            aPro.eliminarProducto(pos)
-            aPro.grabar() #--> los datos ya se están grabando en el archivo
-            self.limpiarControles()
-            self.listar()
-
-#Quitar datos
-    def quitar(self):
-        if aPro.tamañoArregloProducto() ==0:
-            QtWidgets.QMessageBox.information(self, "Eliminar Productos",
-                                              "No existe Productoss a eliminar... !!!",
-                                              QtWidgets.QMessageBox.Ok)
-        else:
-            fila=self.tblProductos.selectedItems()
-            if fila:
-                indiceFila=fila[0].row()
-                codigo=self.tblProductos.item(indiceFila, 0).text()
-                pos =aPro.buscarProducto(codigo)
-                aPro.eliminarProducto(pos)
-                aPro.grabar() #--> los datos ya se están grabando en el archivo
-                self.limpiarTabla()
-                self.listar()
+            # Si no hay filtros específicos, aplicar a todos
+            self.listarTodos()
+    
+    def filtrarPorEstado(self):
+        estado, ok = QtWidgets.QInputDialog.getItem(self, "Filtrar por Estado",
+                                                  "Seleccione el estado:",
+                                                  ["Todos", "Aprobados", "Desaprobados"], 0, False)
+        if ok:
+            if estado == "Aprobados":
+                self.rbAprobados.setChecked(True)
+            elif estado == "Desaprobados":
+                self.rbDesaprobados.setChecked(True)
             else:
-                QtWidgets.QMessageBox.information(self, "Eliminar Productos",
-                                                  "Debe seleccionar una fila... !!!",
-                                                  QtWidgets.QMessageBox.Ok)
-
-#Modificar datos         
-    def modificar(self):
-        if aPro.tamañoArregloProducto() == 0:
-            QtWidgets.QMessageBox.information(self, "Modificar Productos",
-                                                  "No existen Productoss a Modificar... !!!",
-						                           QtWidgets.QMessageBox.Ok)
-        else:
-            codigo= self.obtenerCodigo()
-            pos = aPro.buscarProducto(codigo)
-            if pos != -1:
-                objCli= producto(self.obtenerCodigo(), self.obtenerNombres(),
-                                 self.obtenerDescripcion(),
-                                 self.obtenerStockMinimo(),
-                                 self.obtenerStockActual(),
-                                 self.obtenerPrecioCosto(), self.obtenerPrecioVenta())
-                aPro.modificarProducto(objCli, pos)
-                aPro.grabar() #--> los datos ya se están grabando en el archivo
-                self.limpiarControles()
-                self.listar()
+                self.rbTodos.setChecked(True)
+            
+            self.aplicarFiltros()
+    
+    def mostrarEstadisticas(self):
+        total_alumnos = aAlum.tamañoArregloAlumnos()
+        aprobados = 0
+        desaprobados = 0
+        promedios = []
+        
+        for i in range(total_alumnos):
+            alumno = aAlum.devolverAlumno(i)
+            if alumno.Estado() == "Aprobado":
+                aprobados += 1
+            else:
+                desaprobados += 1
+            
+            promedio = alumno.Promedio()
+            if isinstance(promedio, float):
+                promedios.append(promedio)
+        
+        #
