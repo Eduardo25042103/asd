@@ -25,7 +25,8 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.btnBuscarCurso.clicked.connect(self.buscarPorCurso)
         self.btnBuscarCodigo.clicked.connect(self.buscarPorCodigo)
         self.btnListarTodos.clicked.connect(self.listarTodos)
-        self.btnEstadisticas.clicked.connect(self.mostrarEstadisticas)
+        # Simplificación: remover estadísticas avanzadas
+        self.btnEstadisticas.clicked.connect(self.mostrarEstadisticasSimples)
         self.btnExportar.clicked.connect(self.exportarReporte)
         self.btnLimpiar.clicked.connect(self.limpiarFiltros)
         
@@ -34,9 +35,11 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.actionListado_General.triggered.connect(self.listarTodos)
         self.actionPor_Curso.triggered.connect(self.buscarPorCurso)
         self.actionPor_Estado.triggered.connect(self.filtrarPorEstado)
-        self.actionEstadisticas.triggered.connect(self.mostrarEstadisticas)
-        # Eliminar o reemplazar los menús de exportación a PDF y Excel
+        self.actionEstadisticas.triggered.connect(self.mostrarEstadisticasSimples)
+        
+        # Mantener solo la exportación a TXT
         if hasattr(self, 'actionExportar_a_PDF'):
+            self.actionExportar_a_PDF.setText("Exportar a TXT")
             self.actionExportar_a_PDF.triggered.connect(self.exportarReporte)
         if hasattr(self, 'actionExportar_a_Excel'):
             self.actionExportar_a_Excel.setText("Exportar a TXT")
@@ -70,6 +73,38 @@ class VentanaReportes(QtWidgets.QMainWindow):
         self.rbTodos.setChecked(True)
         self.listarTodos()
     
+    def obtenerPromedioActualizado(self, alumno):
+        """Método para obtener el promedio actualizado del alumno"""
+        codigo = alumno.getCodigoAlumno()
+        index_nota = aNotas.buscarNotaPorCodigo(codigo)
+        
+        if index_nota != -1:
+            # Si hay notas registradas, calcular el promedio con los datos actualizados
+            nota_data = aNotas.dataNotas[index_nota]
+            notas = [
+                float(nota_data.get("nota1", 0)),
+                float(nota_data.get("nota2", 0)),
+                float(nota_data.get("nota3", 0)),
+                float(nota_data.get("nota4", 0))
+            ]
+            # Filtrar notas que son cero (no registradas)
+            notas_validas = [n for n in notas if n > 0]
+            if notas_validas:
+                return sum(notas_validas) / len(notas_validas)
+            else:
+                return "Sin notas"
+        else:
+            # Si no hay notas registradas, usar el método del alumno
+            promedio = alumno.Promedio()
+            return promedio
+    
+    def obtenerEstadoActualizado(self, promedio):
+        """Método para obtener el estado basado en el promedio actualizado"""
+        if isinstance(promedio, str):
+            return "Pendiente"
+        
+        return "Aprobado" if promedio >= 11 else "Desaprobado"
+    
     def listarTodos(self):
         self.limpiarTabla()
         self.tblReportes.setRowCount(aAlum.tamañoArregloAlumnos())
@@ -79,10 +114,14 @@ class VentanaReportes(QtWidgets.QMainWindow):
             alumno = aAlum.devolverAlumno(i)
             codigo = alumno.getCodigoAlumno()
             
+            # Obtener promedio actualizado
+            promedio = self.obtenerPromedioActualizado(alumno)
+            estado = self.obtenerEstadoActualizado(promedio)
+            
             # Verificar si el alumno cumple con los filtros de estado
-            if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
+            if self.rbAprobados.isChecked() and estado != "Aprobado":
                 continue
-            if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
+            if self.rbDesaprobados.isChecked() and estado != "Desaprobado":
                 continue
             
             # Obtener curso desde notas si existe, sino del alumno
@@ -97,15 +136,14 @@ class VentanaReportes(QtWidgets.QMainWindow):
             self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
             self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso))
             
-            # Calcular y mostrar promedio
-            promedio = alumno.Promedio()
+            # Mostrar promedio actualizado
             if isinstance(promedio, float):
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
             else:
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(promedio))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             
-            # Mostrar estado
-            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            # Mostrar estado actualizado
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(estado))
             row_index += 1
         
         # Ajustar el número real de filas mostradas
@@ -143,20 +181,23 @@ class VentanaReportes(QtWidgets.QMainWindow):
         else:
             curso = alumno.getCursoAlumno()
         
+        # Obtener promedio actualizado
+        promedio = self.obtenerPromedioActualizado(alumno)
+        estado = self.obtenerEstadoActualizado(promedio)
+        
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
         self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
         self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(curso))
         
-        # Calcular y mostrar promedio
-        promedio = alumno.Promedio()
+        # Mostrar promedio actualizado
         if isinstance(promedio, float):
-            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
         else:
-            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(promedio))
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
         
-        # Mostrar estado
-        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        # Mostrar estado actualizado
+        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(estado))
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
@@ -189,20 +230,23 @@ class VentanaReportes(QtWidgets.QMainWindow):
         else:
             curso = alumno.getCursoAlumno()
         
+        # Obtener promedio actualizado
+        promedio = self.obtenerPromedioActualizado(alumno)
+        estado = self.obtenerEstadoActualizado(promedio)
+        
         self.tblReportes.setItem(0, 0, QtWidgets.QTableWidgetItem(codigo))
         self.tblReportes.setItem(0, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
         self.tblReportes.setItem(0, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
         self.tblReportes.setItem(0, 3, QtWidgets.QTableWidgetItem(curso))
         
-        # Calcular y mostrar promedio
-        promedio = alumno.Promedio()
+        # Mostrar promedio actualizado
         if isinstance(promedio, float):
-            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
         else:
-            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(promedio))
+            self.tblReportes.setItem(0, 4, QtWidgets.QTableWidgetItem(str(promedio)))
         
-        # Mostrar estado
-        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+        # Mostrar estado actualizado
+        self.tblReportes.setItem(0, 5, QtWidgets.QTableWidgetItem(estado))
         
         # Ajustar tamaño de las columnas
         self.tblReportes.resizeColumnsToContents()
@@ -251,10 +295,14 @@ class VentanaReportes(QtWidgets.QMainWindow):
             alumno = aAlum.devolverAlumno(pos)
             codigo = alumno.getCodigoAlumno()
             
+            # Obtener promedio actualizado
+            promedio = self.obtenerPromedioActualizado(alumno)
+            estado = self.obtenerEstadoActualizado(promedio)
+            
             # Verificar si el alumno cumple con los filtros de estado
-            if self.rbAprobados.isChecked() and alumno.Estado() != "Aprobado":
+            if self.rbAprobados.isChecked() and estado != "Aprobado":
                 continue
-            if self.rbDesaprobados.isChecked() and alumno.Estado() != "Desaprobado":
+            if self.rbDesaprobados.isChecked() and estado != "Desaprobado":
                 continue
             
             self.tblReportes.setItem(row_index, 0, QtWidgets.QTableWidgetItem(codigo))
@@ -262,15 +310,14 @@ class VentanaReportes(QtWidgets.QMainWindow):
             self.tblReportes.setItem(row_index, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
             self.tblReportes.setItem(row_index, 3, QtWidgets.QTableWidgetItem(curso_seleccionado))
             
-            # Calcular y mostrar promedio
-            promedio = alumno.Promedio()
+            # Mostrar promedio actualizado
             if isinstance(promedio, float):
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(f"{promedio:.2f}"))
             else:
-                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(promedio))
+                self.tblReportes.setItem(row_index, 4, QtWidgets.QTableWidgetItem(str(promedio)))
             
-            # Mostrar estado
-            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(alumno.Estado()))
+            # Mostrar estado actualizado
+            self.tblReportes.setItem(row_index, 5, QtWidgets.QTableWidgetItem(estado))
             row_index += 1
         
         # Ajustar el número real de filas mostradas
@@ -305,52 +352,24 @@ class VentanaReportes(QtWidgets.QMainWindow):
             
             self.aplicarFiltros()
     
-    def mostrarEstadisticas(self):
-        total_alumnos = self.tblReportes.rowCount()  # Usar solo los alumnos mostrados en la tabla
+    def mostrarEstadisticasSimples(self):
+        """Versión simplificada de estadísticas"""
+        total_alumnos = self.tblReportes.rowCount()
         aprobados = 0
-        desaprobados = 0
-        promedios = []
-        cursos = {}
         
-        for i in range(total_alumnos):
-            estado = self.tblReportes.item(i, 5).text() if self.tblReportes.item(i, 5) else ""
+        for fila in range(total_alumnos):
+            estado = self.tblReportes.item(fila, 5).text() if self.tblReportes.item(fila, 5) else ""
             if estado == "Aprobado":
                 aprobados += 1
-            else:
-                desaprobados += 1
-            
-            promedio_texto = self.tblReportes.item(i, 4).text() if self.tblReportes.item(i, 4) else ""
-            try:
-                promedio = float(promedio_texto)
-                promedios.append(promedio)
-            except ValueError:
-                pass
-            
-            # Contar alumnos por curso
-            curso = self.tblReportes.item(i, 3).text() if self.tblReportes.item(i, 3) else ""
-            if curso in cursos:
-                cursos[curso] += 1
-            else:
-                cursos[curso] = 1
         
-        # Calcular estadísticas
-        promedio_general = sum(promedios) / len(promedios) if promedios else 0
-        porcentaje_aprobados = (aprobados / total_alumnos) * 100 if total_alumnos > 0 else 0
-        porcentaje_desaprobados = (desaprobados / total_alumnos) * 100 if total_alumnos > 0 else 0
-        
-        # Crear mensaje con las estadísticas
-        mensaje = f"Estadísticas del reporte:\n\n"
+        # Mensaje simple con solo lo básico
+        mensaje = f"Resumen de alumnos:\n\n"
         mensaje += f"Total de alumnos: {total_alumnos}\n"
-        mensaje += f"Alumnos aprobados: {aprobados} ({porcentaje_aprobados:.2f}%)\n"
-        mensaje += f"Alumnos desaprobados: {desaprobados} ({porcentaje_desaprobados:.2f}%)\n"
-        mensaje += f"Promedio general: {promedio_general:.2f}\n\n"
-        
-        mensaje += "Distribución por curso:\n"
-        for curso, cantidad in cursos.items():
-            mensaje += f"- {curso}: {cantidad} alumnos\n"
+        mensaje += f"Alumnos aprobados: {aprobados}\n"
+        mensaje += f"Alumnos desaprobados: {total_alumnos - aprobados}\n"
         
         # Mostrar estadísticas en un diálogo
-        QtWidgets.QMessageBox.information(self, "Estadísticas", mensaje, QtWidgets.QMessageBox.Ok)
+        QtWidgets.QMessageBox.information(self, "Estadísticas Básicas", mensaje, QtWidgets.QMessageBox.Ok)
     
     def exportarReporte(self):
         # Verificar si hay datos para exportar
@@ -410,46 +429,20 @@ class VentanaReportes(QtWidgets.QMainWindow):
                     
                     archivo.write(linea + "\n")
                 
-                # Agregar resumen al final
-                archivo.write("\n\nRESUMEN DE DATOS\n")
-                archivo.write("==============\n\n")
+                # Agregar resumen básico al final
+                archivo.write("\n\nRESUMEN\n")
+                archivo.write("=======\n\n")
                 
-                # Calcular estadísticas
                 total_alumnos = self.tblReportes.rowCount()
                 aprobados = 0
-                promedios = []
-                cursos = {}
-                
                 for fila in range(total_alumnos):
                     estado = self.tblReportes.item(fila, 5).text() if self.tblReportes.item(fila, 5) else ""
                     if estado == "Aprobado":
                         aprobados += 1
-                    
-                    promedio_texto = self.tblReportes.item(fila, 4).text() if self.tblReportes.item(fila, 4) else ""
-                    try:
-                        promedio = float(promedio_texto)
-                        promedios.append(promedio)
-                    except ValueError:
-                        pass
-                    
-                    # Contar alumnos por curso
-                    curso = self.tblReportes.item(fila, 3).text() if self.tblReportes.item(fila, 3) else ""
-                    if curso in cursos:
-                        cursos[curso] += 1
-                    else:
-                        cursos[curso] = 1
                 
-                promedio_general = sum(promedios) / len(promedios) if promedios else 0
-                
-                archivo.write(f"Total de alumnos en el reporte: {total_alumnos}\n")
+                archivo.write(f"Total de alumnos: {total_alumnos}\n")
                 archivo.write(f"Alumnos aprobados: {aprobados}\n")
                 archivo.write(f"Alumnos desaprobados: {total_alumnos - aprobados}\n")
-                archivo.write(f"Promedio general: {promedio_general:.2f}\n\n")
-                
-                # Agregar distribución por curso
-                archivo.write("Distribución por curso:\n")
-                for curso, cantidad in cursos.items():
-                    archivo.write(f"- {curso}: {cantidad} alumnos\n")
                 
             QtWidgets.QMessageBox.information(self, "Exportar Reporte", 
                                             f"Reporte exportado exitosamente a:\n{filename}", 
