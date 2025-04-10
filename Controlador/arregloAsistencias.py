@@ -1,158 +1,110 @@
-from Controlador.alumnos import Alumno
-from datetime import date
+class ArregloAsistencias():
+    #ATRIBUTOS
+    dataAsistencias = [] #ALMACENAR ASISTENCIAS
 
-class ArregloAsistencias:
-    """
-    Clase para gestionar las asistencias de los alumnos.
-    Aunque usamos el modelo de Alumno para almacenar las asistencias,
-    esta clase proporciona métodos específicos para manejar asistencias.
-    """
+    #CONSTRUCTORES
+    def __init__(self):
+        self.cargar()
     
-    def __init__(self, arregloAlumnos):
-        """
-        Inicializa con una referencia al arreglo de alumnos
-        """
-        self.arregloAlumnos = arregloAlumnos
-    
-    def registrarAsistencia(self, dni, fecha, asistio=True):
-        """
-        Registra la asistencia de un alumno en una fecha específica
-        """
-        index = self.arregloAlumnos.buscarAlumno(dni)
-        if index == -1:
-            return False
+    def registrarAsistencia(self, codigo, fecha, estado):
+        # Buscar si ya existe una asistencia para este código y fecha
+        for i, asistencia in enumerate(self.dataAsistencias):
+            if asistencia["codigo"] == codigo and asistencia["fecha"] == fecha:
+                # Actualizar estado
+                self.dataAsistencias[i]["estado"] = estado
+                return True
         
-        alumno = self.arregloAlumnos.devolverAlumno(index)
-        
-        # Formar la fecha en formato string YYYY-MM-DD
-        if isinstance(fecha, date):
-            fecha_str = fecha.strftime("%Y-%m-%d")
-        else:
-            fecha_str = fecha
-            
-        # Obtener diccionario de asistencias actual
-        try:
-            dictAsistencia = eval(alumno.getFechasAsistenciaAlumno() or "{}")
-        except:
-            dictAsistencia = {}
-        
-        # Registrar asistencia
-        dictAsistencia[fecha_str] = "A" if asistio else "F"
-        
-        # Actualizar alumno
-        alumno.setFechasAsistenciaAlumno(str(dictAsistencia))
-        self.arregloAlumnos.modificarAlumno(alumno, index)
-        self.arregloAlumnos.grabar()
-        
+        # Si no existe, crear nueva asistencia
+        asistencia = {
+            "codigo": codigo,
+            "fecha": fecha,
+            "estado": estado
+        }
+        self.dataAsistencias.append(asistencia)
         return True
     
-    def consultarAsistencia(self, dni, fecha=None):
-        """
-        Consulta la asistencia de un alumno
-        Si se proporciona fecha, devuelve la asistencia para esa fecha
-        Si no, devuelve todo el historial de asistencias
-        """
-        index = self.arregloAlumnos.buscarAlumno(dni)
-        if index == -1:
-            return None
-            
-        alumno = self.arregloAlumnos.devolverAlumno(index)
-        
-        # Formar la fecha en formato string YYYY-MM-DD si es un objeto date
-        if isinstance(fecha, date):
-            fecha_str = fecha.strftime("%Y-%m-%d")
-        else:
-            fecha_str = fecha
-            
-        # Obtener diccionario de asistencias
-        try:
-            dictAsistencia = eval(alumno.getFechasAsistenciaAlumno() or "{}")
-        except:
-            dictAsistencia = {}
-            
-        # Si se proporciona fecha, devolver solo esa asistencia
-        if fecha_str:
-            return dictAsistencia.get(fecha_str, None)
-        
-        # De lo contrario, devolver todo el diccionario
-        return dictAsistencia
+    def buscarAsistencia(self, codigo, fecha=None):
+        resultados = []
+        for asistencia in self.dataAsistencias:
+            if asistencia["codigo"] == codigo:
+                if fecha is None or asistencia["fecha"] == fecha:
+                    resultados.append(asistencia)
+        return resultados
     
-    def generarReporteAsistencias(self, fecha=None, curso=None):
-        """
-        Genera un reporte de asistencias, filtrado por fecha y/o curso
-        Retorna una lista de diccionarios con la información
-        """
-        # Formar la fecha en formato string YYYY-MM-DD si es un objeto date
-        if isinstance(fecha, date):
-            fecha_str = fecha.strftime("%Y-%m-%d")
-        else:
-            fecha_str = fecha
-            
-        reporte = []
+    def eliminarAsistencia(self, codigo, fecha):
+        for i, asistencia in enumerate(self.dataAsistencias):
+            if asistencia["codigo"] == codigo and asistencia["fecha"] == fecha:
+                del self.dataAsistencias[i]
+                return True
+        return False
+    
+    def generarReporteAsistencias(self, codigo=None, fecha=None, curso=None):
+        # Esta función necesita tener acceso a los datos de los alumnos
+        # para poder filtrar por curso
+        aAlumnos = ArregloAlumnos()
         
-        for i in range(self.arregloAlumnos.tamañoArregloAlumnos()):
-            alumno = self.arregloAlumnos.devolverAlumno(i)
-            
-            # Aplicar filtro de curso si se proporciona
-            if curso and alumno.getCursoAlumno() != curso:
+        resultados = []
+        for asistencia in self.dataAsistencias:
+            # Si se especificó un código y no coincide, saltar
+            if codigo and asistencia["codigo"] != codigo:
                 continue
                 
-            # Obtener diccionario de asistencias
-            try:
-                dictAsistencia = eval(alumno.getFechasAsistenciaAlumno() or "{}")
-            except:
-                dictAsistencia = {}
+            # Si se especificó una fecha y no coincide, saltar
+            if fecha and asistencia["fecha"] != fecha:
+                continue
                 
-            # Si se proporciona fecha, verificar solo esa fecha
-            if fecha_str:
-                asistencia = dictAsistencia.get(fecha_str, None)
-                if asistencia:
-                    reporte.append({
-                        "codigo": alumno.getCodigoAlumno(),
-                        "dni": alumno.getDniAlumno(),
-                        "nombre": alumno.getApNomAlumno(),
-                        "curso": alumno.getCursoAlumno(),
-                        "fecha": fecha_str,
-                        "asistio": asistencia == "A"
-                    })
-            else:
-                # Si no se proporciona fecha, incluir todo el historial
-                for fecha, asistencia in dictAsistencia.items():
-                    reporte.append({
-                        "codigo": alumno.getCodigoAlumno(),
-                        "dni": alumno.getDniAlumno(),
-                        "nombre": alumno.getApNomAlumno(),
-                        "curso": alumno.getCursoAlumno(),
-                        "fecha": fecha,
-                        "asistio": asistencia == "A"
-                    })
-                    
-        return reporte
+            # Si se especificó un curso, verificar si el alumno está en ese curso
+            if curso:
+                index = aAlumnos.buscarAlumnoPorCodigo(asistencia["codigo"])
+                if index == -1 or aAlumnos.devolverAlumno(index).getCursoAlumno() != curso:
+                    continue
+            
+            # Buscar datos del alumno
+            index = aAlumnos.buscarAlumnoPorCodigo(asistencia["codigo"])
+            if index != -1:
+                alumno = aAlumnos.devolverAlumno(index)
+                resultados.append({
+                    "codigo": asistencia["codigo"],
+                    "dni": alumno.getDniAlumno(),
+                    "nombre": alumno.getApNomAlumno(),
+                    "curso": alumno.getCursoAlumno(),
+                    "fecha": asistencia["fecha"],
+                    "estado": asistencia["estado"]
+                })
+        
+        return resultados
     
-    def calcularPorcentajeAsistencia(self, dni):
-        """
-        Calcula el porcentaje de asistencia de un alumno
-        """
-        index = self.arregloAlumnos.buscarAlumno(dni)
-        if index == -1:
+    def calcularPorcentajeAsistencia(self, codigo):
+        asistencias = self.buscarAsistencia(codigo)
+        if not asistencias:
             return 0
             
-        alumno = self.arregloAlumnos.devolverAlumno(index)
+        total = len(asistencias)
+        presentes = sum(1 for a in asistencias if a["estado"] == "Presente")
         
-        # Obtener diccionario de asistencias
+        return (presentes / total) * 100 if total > 0 else 0
+    
+    def grabar(self):
+        archivo = open("Modelo/Asistencias.txt", "w+", encoding="UTF-8")
+        for asistencia in self.dataAsistencias:
+            archivo.write(
+                asistencia["codigo"] + "," +
+                asistencia["fecha"] + "," +
+                asistencia["estado"] + "\n"
+            )
+        archivo.close()
+    
+    def cargar(self):
         try:
-            dictAsistencia = eval(alumno.getFechasAsistenciaAlumno() or "{}")
-        except:
-            dictAsistencia = {}
-            
-        if not dictAsistencia:
-            return 0
-            
-        # Contar asistencias
-        total = len(dictAsistencia)
-        asistencias = sum(1 for asistencia in dictAsistencia.values() if asistencia == "A")
-        
-        if total == 0:
-            return 0
-            
-        return (asistencias / total) * 100
+            archivo = open("Modelo/Asistencias.txt", "r", encoding="UTF-8")
+            for linea in archivo.readlines():
+                columna = str(linea).strip().split(",")
+                if len(columna) >= 3:
+                    codigo = columna[0]
+                    fecha = columna[1]
+                    estado = columna[2]
+                    
+                    self.registrarAsistencia(codigo, fecha, estado)
+            archivo.close()
+        except FileNotFoundError:
+            open("Modelo/Asistencias.txt", "w", encoding="UTF-8").close()

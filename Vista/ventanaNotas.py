@@ -1,17 +1,19 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5 import QtGui
 from Controlador.arregloAlumnos import ArregloAlumnos
+from Controlador.arregloNotas import ArregloNotas
 from Controlador.alumnos import Alumno
-
-aAlum = ArregloAlumnos()
 
 class VentanaNotas(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super(VentanaNotas, self).__init__(parent)
         uic.loadUi("UI/ventanaNotas.ui", self)
-        #self.show()
-
-        #self.Carga_Clientes()
+        
+        # Inicializar arreglos
+        self.arregloAlumnos = ArregloAlumnos()
+        self.arregloNotas = ArregloNotas()
+        
+        # Conectar botones
         self.btnRegistrar.clicked.connect(self.registrar)
         self.btnConsultar.clicked.connect(self.consultar)
         self.btnEliminar.clicked.connect(self.eliminar)
@@ -19,87 +21,56 @@ class VentanaNotas(QtWidgets.QMainWindow):
         self.btnModificar.clicked.connect(self.modificar)
         self.btnQuitar.clicked.connect(self.quitar)
         
-    def Carga_Alumnos(self):
-        if aAlum.tamañoArregloAlumnos()==0:
-            objAlumno= Alumno("")
-            aAlum.adicionaAlumnos(objAlumno)
-            self.listar()
-        else:
-            self.listar()
-
-    def obtenerCodigo(self):
-        return self.txtCodigo.text()
+        # Cargar datos iniciales
+        self.listar()
     
-    def obtenerDni(self):
-        return self.txtDni.text()
-    
-    def obtenerApNom(self):
-        return self.txtApNom.text()
-    
-    def obtenerCurso(self):
-        print(self.cboCurso.currentText())
-        return self.cboCurso.currentText()
-
-    def obtenerEC1(self):
-        return self.txtEC1.text()
-
-    def obtenerEC2(self):
-        return self.txtEC2.text()
-
-    def obtenerEC3(self):
-        return self.txtEC3.text()
-
-    def obtenerEF(self):
-        return self.txtEF.text()
-
-    def limpiarTabla(self):
-        self.tblNotas.clearContents()
-        self.tblNotas.setRowCount(0)
-
-    def valida(self):
-        if self.txtCodigo.text() =="":
-            self.txtCodigo.setFocus()
-            return "Codigo del alumno...!!!"
-        elif self.txtDni.text() =="":
-            self.txtDni.setFocus()
-            return "DNI del alumno...!!!"
-        elif self.txtApNom.text()=="":
-            self.txtApNom.setFocus()
-            return "Apellidos y Nombres del alumno...!!!"
-        elif self.cboCurso.currentIndex() == 0:
-            self.cboCurso.setFocus()
-            return "Curso del alumno...!!!"
-        elif self.txtEC1.text()=="":
-            self.txtEC1.setFocus()
-            return "EC1 del alumno...!!!"
-        elif self.txtEC2.text()=="":
-            self.txtEC2.setFocus()
-            return "EC2 del alumno...!!!"
-        elif self.txtEC3.text()=="":
-            self.txtEC3.setFocus()
-            return "EC3 del alumno...!!!"
-        elif self.txtEF.text()=="":
-            self.txtEF.setFocus()
-            return "EF del alumno...!!!"
-        else:
-            return ""
-
+    # Método para listar que combine datos de alumnos y notas
     def listar(self):
-        self.tblNotas.setRowCount(aAlum.tamañoArregloAlumnos())
-        self.tblNotas.setColumnCount(10)
-        self.tblNotas.verticalHeader().setVisible(False)
-        for i in range (0, aAlum.tamañoArregloAlumnos()):
-            self.tblNotas.setItem(i, 0, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getCodigoAlumno()))
-            self.tblNotas.setItem(i, 1, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getDniAlumno()))
-            self.tblNotas.setItem(i, 2, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getApNomAlumno()))
-            self.tblNotas.setItem(i, 3, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getCursoAlumno()))
-            self.tblNotas.setItem(i, 4, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getEC1Alumno()))
-            self.tblNotas.setItem(i, 5, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getEC2Alumno()))
-            self.tblNotas.setItem(i, 6, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getEC3Alumno()))
-            self.tblNotas.setItem(i, 7, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).getEXFAlumno()))
-            self.tblNotas.setItem(i, 8, QtWidgets.QTableWidgetItem(str(aAlum.devolverAlumno(i).Promedio())))
-            self.tblNotas.setItem(i, 9, QtWidgets.QTableWidgetItem(aAlum.devolverAlumno(i).Estado()))
-
+        self.limpiarTabla()
+        
+        # Iterar por todos los alumnos
+        for i in range(self.arregloAlumnos.tamañoArregloAlumnos()):
+            alumno = self.arregloAlumnos.devolverAlumno(i)
+            codigo = alumno.getCodigoAlumno()
+            
+            # Buscar notas del alumno
+            index_nota = self.arregloNotas.buscarNotaPorCodigo(codigo)
+            
+            # Preparar datos para mostrar
+            row = self.tblNotas.rowCount()
+            self.tblNotas.insertRow(row)
+            
+            # Datos básicos del alumno
+            self.tblNotas.setItem(row, 0, QtWidgets.QTableWidgetItem(codigo))
+            self.tblNotas.setItem(row, 1, QtWidgets.QTableWidgetItem(alumno.getDniAlumno()))
+            self.tblNotas.setItem(row, 2, QtWidgets.QTableWidgetItem(alumno.getApNomAlumno()))
+            self.tblNotas.setItem(row, 3, QtWidgets.QTableWidgetItem(alumno.getCursoAlumno()))
+            
+            # Notas (si existen)
+            if index_nota != -1:
+                nota = self.arregloNotas.dataNotas[index_nota]
+                ec1 = nota["ec1"]
+                ec2 = nota["ec2"]
+                ec3 = nota["ec3"]
+                exf = nota["exf"]
+                
+                promedio = self.arregloNotas.calcularPromedio(ec1, ec2, ec3, exf)
+                estado = self.arregloNotas.determinarEstado(promedio)
+                
+                self.tblNotas.setItem(row, 4, QtWidgets.QTableWidgetItem(ec1))
+                self.tblNotas.setItem(row, 5, QtWidgets.QTableWidgetItem(ec2))
+                self.tblNotas.setItem(row, 6, QtWidgets.QTableWidgetItem(ec3))
+                self.tblNotas.setItem(row, 7, QtWidgets.QTableWidgetItem(exf))
+                self.tblNotas.setItem(row, 8, QtWidgets.QTableWidgetItem(str(promedio)))
+                self.tblNotas.setItem(row, 9, QtWidgets.QTableWidgetItem(estado))
+            else:
+                # No hay notas registradas
+                self.tblNotas.setItem(row, 4, QtWidgets.QTableWidgetItem(""))
+                self.tblNotas.setItem(row, 5, QtWidgets.QTableWidgetItem(""))
+                self.tblNotas.setItem(row, 6, QtWidgets.QTableWidgetItem(""))
+                self.tblNotas.setItem(row, 7, QtWidgets.QTableWidgetItem(""))
+                self.tblNotas.setItem(row, 8, QtWidgets.QTableWidgetItem("Sin notas"))
+                self.tblNotas.setItem(row, 9, QtWidgets.QTableWidgetItem("Sin notas"))
             
     def limpiarControles(self):
         self.txtCodigo.clear()

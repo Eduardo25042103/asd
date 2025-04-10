@@ -119,19 +119,10 @@ class ArregloAlumnos():
         archivo = open("Modelo/Alumnos.txt", "w+", encoding="UTF-8")
         for i in range(self.tamañoArregloAlumnos()):
             alumno = self.devolverAlumno(i)
-            dictAsistencia = alumno.getDictAsistencia()
-            
             archivo.write(str(alumno.getCodigoAlumno()) + ","
             + str(alumno.getDniAlumno()) + ","
             + str(alumno.getApNomAlumno()) + ","
-            + str(alumno.getCursoAlumno()) + ","
-            + str(alumno.getEC1Alumno()) + ","
-            + str(alumno.getEC2Alumno()) + ","
-            + str(alumno.getEC3Alumno()) + ","
-            + str(alumno.getEXFAlumno()) + ","
-            + str(alumno.Promedio()) + ","
-            + str(alumno.Estado()) + ","
-            + str(dictAsistencia) + "\n")
+            + str(alumno.getCursoAlumno()) + "\n")
         archivo.close()
         
     def cargar(self):
@@ -143,21 +134,9 @@ class ArregloAlumnos():
                 codigo = columna[0]
                 dni = columna[1]
                 apnom = columna[2]
-                curso = columna[3]
-                ec1 = columna[4]
-                ec2 = columna[5]
-                ec3 = columna[6]
-                exf = columna[7]
+                curso = columna[3].strip()
                 
-                objAlumno = Alumno(codigo, dni, apnom, curso, ec1, ec2, ec3, exf)
-                
-                if len(columna) > 10:
-                    try:
-                        dictAsistencia = eval(columna[10])
-                        objAlumno.setDictAsistencia(dictAsistencia)
-                    except:
-                        pass
-                
+                objAlumno = Alumno(codigo, dni, apnom, curso)
                 self.adicionaAlumnos(objAlumno)
             archivo.close()
         except FileNotFoundError:

@@ -1,14 +1,12 @@
 class Alumno():
-
     #ATRIBUTOS (ENCAPSULADOS)
     __dniAlumno=""; __apnomAlumno=""
     __codigoAlumno=""; __cursoAlumno=""
     __ec1Alumno=""; __ec2Alumno=""
     __ec3Alumno="" ; __exfAlumno=""
-    __dictAsistencia={}
     
     #CONSTRUCTORES
-    def __init__(self, codigoAlumno, dniAlumno, apnomAlumno, cursoAlumno, ec1Alumno="", ec2Alumno="", ec3Alumno="", exfAlumno=""):
+    def __init__(self, codigoAlumno, dniAlumno="", apnomAlumno="", cursoAlumno="", ec1Alumno="", ec2Alumno="", ec3Alumno="", exfAlumno=""):
         self.__codigoAlumno = codigoAlumno
         self.__dniAlumno = dniAlumno
         self.__apnomAlumno = apnomAlumno
@@ -17,7 +15,6 @@ class Alumno():
         self.__ec2Alumno = ec2Alumno
         self.__ec3Alumno = ec3Alumno
         self.__exfAlumno = exfAlumno
-        self.__dictAsistencia = {}
     
     def Promedio(self):
         try:
@@ -31,32 +28,6 @@ class Alumno():
         else:
             return "Desaprobado"
     
-    # Métodos para manejar asistencias
-    def registrarAsistencia(self, fecha, estado):
-        self.__dictAsistencia[fecha] = estado
-        
-    def getAsistencia(self, fecha=None):
-
-        if fecha:
-            return self.__dictAsistencia.get(fecha, "")
-        return self.__dictAsistencia
-    
-    def getDictAsistencia(self):
-        return self.__dictAsistencia
-    
-    def setDictAsistencia(self, dictAsistencia):
-        self.__dictAsistencia = dictAsistencia
-    
-    def calcularPorcentajeAsistencia(self):
-        if not self.__dictAsistencia:
-            return 0
-            
-        total = len(self.__dictAsistencia)
-        presentes = sum(1 for estado in self.__dictAsistencia.values() if estado == "Presente")
-        
-        return (presentes / total) * 100 if total > 0 else 0
-    
-    # Getters y setters originales    
     def getCodigoAlumno(self):
         return self.__codigoAlumno
     def setCodigoAlumno(self, codigoalumno):
