@@ -82,6 +82,10 @@
 
                 <form action="/books/editar/<%= book.id %>" method="POST">
                   <div class="mb-3">
+                    <label for="title" class="form-label">Título:</label>
+                    <input type="text" class="form-control" name="title" value="<%= book.title %>" required>
+                  </div>
+                  <div class="mb-3">
                     <label for="author_ids" class="form-label">Autores:</label>
                     <select class="form-select" name="author_ids" multiple>
                       <% authors.forEach(author => { %>
@@ -145,6 +149,10 @@
                     <label for="available_copies" class="form-label">Copias Disponibles:</label>
                     <input type="number" class="form-control" name="available_copies" value="<%= book.available_copies %>" required>
                   </div>
+                  <div class="d-flex mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Guardar cambios</button>
+                    <a href="/books" class="btn btn-secondary">Cancelar</a>
+                  </div>  
                 </form>
 
                 

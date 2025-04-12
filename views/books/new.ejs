@@ -91,18 +91,23 @@
               
                   <div class="mb-3">
                     <label for="author_ids" class="form-label">Seleccionar Autores:</label>
-                    <select class="form-select" name="author_ids" multiple size="5">
+                    <select class="form-select" name="author_ids" multiple>
                       <% authors.forEach(author => { %>
                         <option value="<%= author.id %>"><%= author.name %></option>
                       <% }); %>
                     </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Command en Mac) para seleccionar múltiples autores</div>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples autores</div>
                   </div>
               
+                  <!-- Campo para nuevos autores con enfoque dinámico -->
                   <div class="mb-3">
-                    <p class="form-text">O ingrese nuevos autores (uno por línea):</p>
-                    <label for="new_author_names" class="form-label">Nuevos Autores:</label>
-                    <textarea class="form-control" name="new_author_names" rows="3" placeholder="Un autor por línea"></textarea>
+                    <label for="new_author_names" class="form-label">Agregar nuevos autores:</label>
+                    <div id="new-authors-container">
+                      <div class="input-group mb-2">
+                        <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
+                        <button type="button" class="btn btn-outline-secondary add-author-field">+</button>
+                      </div>
+                    </div>
                   </div>
               
                   <div class="mb-3">
@@ -117,18 +122,23 @@
               
                   <div class="mb-3">
                     <label for="category_ids" class="form-label">Seleccionar Categorías:</label>
-                    <select class="form-select" name="category_ids" multiple size="5">
+                    <select class="form-select" name="category_ids" multiple>
                       <% categories.forEach(category => { %>
                         <option value="<%= category.id %>"><%= category.name %></option>
                       <% }); %>
                     </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Command en Mac) para seleccionar múltiples categorías</div>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples categorías</div>
                   </div>
               
+                  <!-- Campo para nuevas categorías con enfoque dinámico -->
                   <div class="mb-3">
-                    <p class="form-text">O ingrese nuevas categorías (una por línea):</p>
-                    <label for="new_category_names" class="form-label">Nuevas Categorías:</label>
-                    <textarea class="form-control" name="new_category_names" rows="3" placeholder="Una categoría por línea"></textarea>
+                    <label for="new_category_names" class="form-label">Agregar nuevas categorías:</label>
+                    <div id="new-categories-container">
+                      <div class="input-group mb-2">
+                        <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
+                        <button type="button" class="btn btn-outline-secondary add-category-field">+</button>
+                      </div>
+                    </div>
                   </div>
               
                   <div class="mb-3">
@@ -139,9 +149,6 @@
                   <button type="submit" class="btn btn-success">Guardar Libro</button>
                   <a href="/books" class="btn btn-secondary">Cancelar</a>
                 </form>
-              
-               
-                  
               </main>
 
                 <footer class="py-4 bg-light mt-auto">
@@ -165,5 +172,48 @@
         <script src="/assets/demo/chart-bar-demo.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script src="/js/datatables-simple-demo.js"></script>
+        
+        <!-- Script para manejar campos dinámicos -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // Agregar campo para nuevo autor
+            document.querySelectorAll('.add-author-field').forEach(button => {
+              button.addEventListener('click', function() {
+                const container = document.getElementById('new-authors-container');
+                const newField = document.createElement('div');
+                newField.className = 'input-group mb-2';
+                newField.innerHTML = `
+                  <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
+                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
+                `;
+                container.appendChild(newField);
+                
+                // Agregar evento para eliminar campo
+                newField.querySelector('.remove-field').addEventListener('click', function() {
+                  container.removeChild(newField);
+                });
+              });
+            });
+            
+            // Agregar campo para nueva categoría
+            document.querySelectorAll('.add-category-field').forEach(button => {
+              button.addEventListener('click', function() {
+                const container = document.getElementById('new-categories-container');
+                const newField = document.createElement('div');
+                newField.className = 'input-group mb-2';
+                newField.innerHTML = `
+                  <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
+                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
+                `;
+                container.appendChild(newField);
+                
+                // Agregar evento para eliminar campo
+                newField.querySelector('.remove-field').addEventListener('click', function() {
+                  container.removeChild(newField);
+                });
+              });
+            });
+          });
+        </script>
     </body>
 </html>
