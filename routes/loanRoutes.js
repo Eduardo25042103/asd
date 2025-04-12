@@ -10,17 +10,21 @@ const isAuthenticated = (req, res, next) => {
   res.redirect('/login');
 };
 
-// Middleware para verificar si es un usuario normal (no admin)
-const isUser = (req, res, next) => {
-  if (req.session.user && req.session.user.role === 'user') {
+// Middleware para verificar si es administrador
+const isAdmin = (req, res, next) => {
+  if (req.session.user && req.session.user.role === 'admin') {
     return next();
   }
-  res.status(403).send('Acceso denegado: se requiere rol de usuario');
+  res.status(403).send('Acceso denegado: se requiere rol de administrador');
 };
 
-// Ruta principal de préstamos
+// Rutas para préstamos
 router.get('/', isAuthenticated, loanController.getAllLoans);
-
-// Aquí puedes añadir más rutas como crear préstamo, devolver libro, etc.
+router.get('/nuevo', isAdmin, loanController.getNewLoanForm);
+router.post('/nuevo', isAdmin, loanController.createLoan);
+router.get('/editar/:id', isAdmin, loanController.getEditLoanForm);
+router.post('/editar/:id', isAdmin, loanController.updateLoan);
+router.get('/devolver/:id', isAuthenticated, loanController.returnBook);
+router.get('/eliminar/:id', isAdmin, loanController.deleteLoan);
 
 module.exports = router;

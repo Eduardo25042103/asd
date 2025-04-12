@@ -1,219 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="" />
-        <meta name="author" content="" />
-        <title>Dashboard - SB Admin</title>
-        <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
-        <link href="/css/styles.css" rel="stylesheet" />
-        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    </head>
-    <body class="sb-nav-fixed">
-        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-            <!-- Navbar Brand-->
-            <a class="navbar-brand ps-3" href="/">Sistema de Gestión</a>
-            <!-- Sidebar Toggle-->
-            <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
-                <i class="fas fa-bars"></i>
-            </button>
-            <!-- Navbar Search-->
-            <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-                <div class="input-group">
-                    <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
-                    <button class="btn btn-primary" id="btnNavbarSearch" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </form>
-            <!-- Navbar-->
-            <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-                <% if (user) { %>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user fa-fw"></i> <%= user.full_name %>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Registrar Préstamo - Biblioteca</title>
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <link href="/css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+</head>
+<body class="sb-nav-fixed">
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3" href="/">Sistema de Gestión</a>
+        <!-- Sidebar Toggle-->
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- Navbar Search-->
+        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+            <div class="input-group">
+                <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
+                <button class="btn btn-primary" id="btnNavbarSearch" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+        <!-- Navbar-->
+        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+            <% if (user) { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user fa-fw"></i> <%= user.full_name %>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="/profile">Settings</a></li>
+                        <li><a class="dropdown-item" href="/activity">Activity Log</a></li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    </ul>
+                </li>
+            <% } else { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+            <% } %>
+        </ul>
+    </nav>
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">Biblioteca</div>
+                        
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                            <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
+                            Libros
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/profile">Settings</a></li>
-                            <li><a class="dropdown-item" href="/activity">Activity Log</a></li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                        </ul>
-                    </li>
-                <% } else { %>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/login">Login</a>
-                    </li>
-                <% } %>
-            </ul>
-        </nav>
-        <div id="layoutSidenav">
-            <div id="layoutSidenav_nav">
-                <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                    <div class="sb-sidenav-menu">
-                        <div class="nav">
-
-                            <div class="sb-sidenav-menu-heading">Biblioteca</div>
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
-                                <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                Libros
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                            </a>
-                            <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
-                                <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="/books">Mostrar Libros</a>
-                                    <a class="nav-link" href="/books/nuevo">Crear Libros</a>
-                                </nav>
-                            </div>
+                        <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                <a class="nav-link" href="/books">Mostrar Libros</a>
+                                <a class="nav-link" href="/books/nuevo">Crear Libros</a>
+                            </nav>
+                        </div>
+                        
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLoans" aria-expanded="false" aria-controls="collapseLoans">
+                            <div class="sb-nav-link-icon"><i class="fas fa-exchange-alt"></i></div>
+                            Préstamos
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                        </a>
+                        <div class="collapse" id="collapseLoans" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                <a class="nav-link" href="/loans">Mis Préstamos</a>
+                                <a class="nav-link" href="/loans/nuevo">Registrar Préstamo</a>
+                            </nav>
                         </div>
                     </div>
-                    <div class="sb-sidenav-footer">
-                        <div class="small">Logged in as:</div>
-                        Eduardo Sánchez
-                    </div>
-                </nav>
-            </div>
-            <div id="layoutSidenav_content">
-              <main class="me-2 ms-2 mt-2 mb-3">
-                <h1 class="mb-4">Registrar Nuevo Libro</h1>
-
-                <% if (error) { %>
-                  <div class="alert alert-danger"><%= error %></div>
-                <% } %>
-              
-                <form action="/books/nuevo" method="POST">
-                  <div class="mb-3">
-                    <label for="title" class="form-label">Título:</label>
-                    <input type="text" class="form-control" name="title" required>
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="author_ids" class="form-label">Seleccionar Autores:</label>
-                    <select class="form-select" name="author_ids" multiple>
-                      <% authors.forEach(author => { %>
-                        <option value="<%= author.id %>"><%= author.name %></option>
-                      <% }); %>
-                    </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples autores</div>
-                  </div>
-              
-                  <!-- Campo para nuevos autores con enfoque dinámico -->
-                  <div class="mb-3">
-                    <label for="new_author_names" class="form-label">Agregar nuevos autores:</label>
-                    <div id="new-authors-container">
-                      <div class="input-group mb-2">
-                        <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
-                        <button type="button" class="btn btn-outline-secondary add-author-field">+</button>
-                      </div>
-                    </div>
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="publisher" class="form-label">Editorial:</label>
-                    <input type="text" class="form-control" name="publisher">
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="year" class="form-label">Año:</label>
-                    <input type="number" class="form-control" name="year">
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="category_ids" class="form-label">Seleccionar Categorías:</label>
-                    <select class="form-select" name="category_ids" multiple>
-                      <% categories.forEach(category => { %>
-                        <option value="<%= category.id %>"><%= category.name %></option>
-                      <% }); %>
-                    </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples categorías</div>
-                  </div>
-              
-                  <!-- Campo para nuevas categorías con enfoque dinámico -->
-                  <div class="mb-3">
-                    <label for="new_category_names" class="form-label">Agregar nuevas categorías:</label>
-                    <div id="new-categories-container">
-                      <div class="input-group mb-2">
-                        <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
-                        <button type="button" class="btn btn-outline-secondary add-category-field">+</button>
-                      </div>
-                    </div>
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="total_copies" class="form-label">Copias Totales:</label>
-                    <input type="number" class="form-control" name="total_copies" value="1" min="1" required>
-                  </div>
-              
-                  <button type="submit" class="btn btn-success">Guardar Libro</button>
-                  <a href="/books" class="btn btn-secondary">Cancelar</a>
-                </form>
-              </main>
-
-                <footer class="py-4 bg-light mt-auto">
-                    <div class="container-fluid px-4">
-                        <div class="d-flex align-items-center justify-content-between small">
-                            <div class="text-muted">Copyright &copy; Your Website 2023</div>
-                            <div>
-                                <a href="#">Privacy Policy</a>
-                                &middot;
-                                <a href="#">Terms &amp; Conditions</a>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
-            </div>
+                </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small">Logged in as:</div>
+                    <%= user ? user.full_name : 'Invitado' %>
+                </div>
+            </nav>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="/js/scripts.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
-        <script src="/assets/demo/chart-area-demo.js"></script>
-        <script src="/assets/demo/chart-bar-demo.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
-        <script src="/js/datatables-simple-demo.js"></script>
-        
-        <!-- Script para manejar campos dinámicos -->
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            // Agregar campo para nuevo autor
-            document.querySelectorAll('.add-author-field').forEach(button => {
-              button.addEventListener('click', function() {
-                const container = document.getElementById('new-authors-container');
-                const newField = document.createElement('div');
-                newField.className = 'input-group mb-2';
-                newField.innerHTML = `
-                  <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
-                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
-                `;
-                container.appendChild(newField);
+        <div id="layoutSidenav_content">
+            <main class="me-2 ms-2 mt-2 mb-3">
+                <h1 class="mb-4">Registrar Nuevo Préstamo</h1>
                 
-                // Agregar evento para eliminar campo
-                newField.querySelector('.remove-field').addEventListener('click', function() {
-                  container.removeChild(newField);
-                });
-              });
-            });
-            
-            // Agregar campo para nueva categoría
-            document.querySelectorAll('.add-category-field').forEach(button => {
-              button.addEventListener('click', function() {
-                const container = document.getElementById('new-categories-container');
-                const newField = document.createElement('div');
-                newField.className = 'input-group mb-2';
-                newField.innerHTML = `
-                  <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
-                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
-                `;
-                container.appendChild(newField);
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
                 
-                // Agregar evento para eliminar campo
-                newField.querySelector('.remove-field').addEventListener('click', function() {
-                  container.removeChild(newField);
-                });
-              });
-            });
-          });
-        </script>
-    </body>
+                <form action="/loans/nuevo" method="POST">
+                    <div class="mb-3">
+                        <label for="book_id" class="form-label">Libro:</label>
+                        <select class="form-select" name="book_id" required>
+                            <option value="">Seleccione un libro</option>
+                            <% books.forEach(book => { %>
+                                <option value="<%= book.id %>"><%= book.title %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Usuario:</label>
+                        <select class="form-select" name="user_id" required>
+                            <option value="">Seleccione un usuario</option>
+                            <% users.forEach(user => { %>
+                                <option value="<%= user.id %>"><%= user.full_name || user.username %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="loan_date" class="form-label">Fecha de Préstamo:</label>
+                        <input type="date" class="form-control" name="loan_date" value="<%= new Date().toISOString().slice(0, 10) %>" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Estado:</label>
+                        <select class="form-select" name="status" required>
+                            <option value="active" selected>Activo</option>
+                            <option value="overdue">Vencido</option>
+                            <option value="returned">Devuelto</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex mt-4">
+                        <button type="submit" class="btn btn-success me-2">Registrar Préstamo</button>
+                        <a href="/loans" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </main>
+            <footer class="py-4 bg-light mt-auto">
+                <div class="container-fluid px-4">
+                    <div class="d-flex align-items-center justify-content-between small">
+                        <div class="text-muted">Copyright &copy; Your Website 2023</div>
+                        <div>
+                            <a href="#">Privacy Policy</a>
+                            &middot;
+                            <a href="#">Terms &amp; Conditions</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="/js/scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script src="/assets/demo/chart-area-demo.js"></script>
+    <script src="/assets/demo/chart-bar-demo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+    <script src="/js/datatables-simple-demo.js"></script>
+</body>
 </html>
