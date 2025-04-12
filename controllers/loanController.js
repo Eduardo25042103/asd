@@ -13,7 +13,7 @@ exports.getAllLoans = (req, res) => {
   const updateStatusQuery = `
     UPDATE loans 
     SET status = 'vencido' 
-    WHERE due_date < ? AND status = 'active'
+    WHERE due_date < ? AND status = 'activo'
   `;
   
   db.query(updateStatusQuery, [today], (err) => {
@@ -107,7 +107,7 @@ exports.createLoan = (req, res) => {
   // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
   const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
   // Por defecto, estado activo para nuevos préstamos
-  const status = 'active';
+  const status = 'activo';
 
   // Validar datos
   if (!book_id || !loan_date || (req.session.user.role === 'admin' && !req.body.user_id)) {
@@ -321,7 +321,7 @@ exports.updateLoan = (req, res) => {
       // Manejar cambios en libros (actualizar copias disponibles)
       const handleBookChanges = () => {
         // Si se cambió el libro y el usuario es admin o si el préstamo no estaba devuelto
-        if (prevBookId != book_id && (req.session.user.role === 'admin' || prevStatus !== 'returned')) {
+        if (prevBookId != book_id && (req.session.user.role === 'admin' || prevStatus !== 'devuelto')) {
           // Incrementar copias disponibles del libro anterior
           db.query(
             'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
@@ -344,7 +344,7 @@ exports.updateLoan = (req, res) => {
               );
             }
           );
-        } else if (prevStatus !== 'returned' && newStatus === 'returned') {
+        } else if (prevStatus !== 'devuelto' && newStatus === 'devuelto') {
           // Si el préstamo se está marcando como devuelto
           db.query(
             'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
@@ -356,7 +356,7 @@ exports.updateLoan = (req, res) => {
               res.redirect('/loans');
             }
           );
-        } else if (prevStatus === 'returned' && newStatus !== 'returned') {
+        } else if (prevStatus === 'devuelto' && newStatus !== 'devuelto') {
           // Si el préstamo se está marcando como no devuelto (solo admin puede hacer esto)
           db.query(
             'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
@@ -404,16 +404,16 @@ exports.returnBook = (req, res) => {
     
     const loan = loans[0];
     
-    // Verificar que el préstamo no esté ya en estado "returned"
-    if (loan.status === 'returned') {
+    // Verificar que el préstamo no esté ya en estado "devuelto"
+    if (loan.status === 'devuelto') {
       return res.status(400).send('El préstamo ya ha sido devuelto');
     }
     
-    // Actualizar préstamo a estado "returned" y establecer fecha de devolución
+    // Actualizar préstamo a estado "devuelto" y establecer fecha de devolución
     const returnDate = new Date().toISOString().slice(0, 10);
     db.query(
       'UPDATE loans SET status = ?, return_date = ? WHERE id = ?',
-      ['returned', returnDate, loanId],
+      ['devuelto', returnDate, loanId],
       (err, result) => {
         if (err) {
           console.error("Error al actualizar préstamo:", err);
@@ -461,15 +461,15 @@ exports.reactivateLoan = (req, res) => {
     
     const loan = loans[0];
     
-    // Verificar que el préstamo esté en estado "returned"
-    if (loan.status !== 'returned') {
+    // Verificar que el préstamo esté en estado "devuelto"
+    if (loan.status !== 'devuelto') {
       return res.status(400).send('Solo se pueden reactivar préstamos devueltos');
     }
     
-    // Actualizar préstamo a estado "active" y eliminar fecha de devolución
+    // Actualizar préstamo a estado "activo" y eliminar fecha de devolución
     db.query(
       'UPDATE loans SET status = ?, return_date = ? WHERE id = ?',
-      ['active', null, loanId],
+      ['activo', null, loanId],
       (err, result) => {
         if (err) {
           console.error("Error al actualizar préstamo:", err);
@@ -526,8 +526,8 @@ exports.deleteLoan = (req, res) => {
         return res.status(500).send('Error en el servidor');
       }
 
-      // Si el préstamo no estaba en estado "returned", incrementar copias disponibles
-      if (loan.status !== 'returned') {
+      // Si el préstamo no estaba en estado "devuelto", incrementar copias disponibles
+      if (loan.status !== 'devuelto') {
         db.query(
           'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
           [loan.book_id],
