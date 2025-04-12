@@ -37,8 +37,8 @@ exports.getAllLoans = (req, res) => {
 
 // Mostrar formulario para crear nuevo préstamo
 exports.getNewLoanForm = (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.status(403).send('Acceso denegado: se requiere rol de administrador');
+  if (!req.session.user) {
+    return res.redirect('/login');
   }
 
   // Obtener libros disponibles
@@ -48,7 +48,17 @@ exports.getNewLoanForm = (req, res) => {
       return res.status(500).send('Error en el servidor');
     }
 
-    // Obtener usuarios
+    // Para usuarios normales, no es necesario seleccionar usuario
+    if (req.session.user.role !== 'admin') {
+      return res.render('loans/new', { 
+        books, 
+        users: null, 
+        error: null,
+        user: req.session.user
+      });
+    }
+
+    // Si es admin, obtener lista de usuarios
     db.query('SELECT id, username, full_name FROM users', (err, users) => {
       if (err) {
         console.error("Error al obtener usuarios:", err);
@@ -67,23 +77,34 @@ exports.getNewLoanForm = (req, res) => {
 
 // Crear nuevo préstamo
 exports.createLoan = (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.status(403).send('Acceso denegado: se requiere rol de administrador');
+  if (!req.session.user) {
+    return res.redirect('/login');
   }
 
-  const { book_id, user_id, loan_date, status } = req.body;
+  const { book_id, loan_date, status } = req.body;
+  // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
+  const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
 
   // Validar datos
-  if (!book_id || !user_id || !loan_date) {
+  if (!book_id || !loan_date) {
     return db.query('SELECT id, title FROM books WHERE available_copies > 0', (err, books) => {
-      db.query('SELECT id, username, full_name FROM users', (err, users) => {
+      if (req.session.user.role === 'admin') {
+        db.query('SELECT id, username, full_name FROM users', (err, users) => {
+          res.render('loans/new', { 
+            books, 
+            users, 
+            error: 'Por favor complete todos los campos requeridos',
+            user: req.session.user
+          });
+        });
+      } else {
         res.render('loans/new', { 
           books, 
-          users, 
+          users: null, 
           error: 'Por favor complete todos los campos requeridos',
           user: req.session.user
         });
-      });
+      }
     });
   }
 
@@ -120,68 +141,98 @@ exports.createLoan = (req, res) => {
 
 // Mostrar formulario para editar préstamo
 exports.getEditLoanForm = (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.status(403).send('Acceso denegado: se requiere rol de administrador');
+  if (!req.session.user) {
+    return res.redirect('/login');
   }
 
   const loanId = req.params.id;
+  
+  // Preparar la consulta para obtener el préstamo
+  let loanQuery = 'SELECT * FROM loans WHERE id = ?';
+  const loanParams = [loanId];
+  
+  // Si no es admin, asegurar que solo pueda editar sus propios préstamos
+  if (req.session.user.role !== 'admin') {
+    loanQuery += ' AND user_id = ?';
+    loanParams.push(req.session.user.id);
+  }
 
   // Obtener préstamo actual
-  db.query(
-    `SELECT * FROM loans WHERE id = ?`,
-    [loanId],
-    (err, loans) => {
-      if (err || !loans.length) {
-        console.error("Error al obtener préstamo:", err);
-        return res.status(404).send('Préstamo no encontrado');
+  db.query(loanQuery, loanParams, (err, loans) => {
+    if (err || !loans.length) {
+      console.error("Error al obtener préstamo:", err);
+      return res.status(404).send('Préstamo no encontrado o no autorizado');
+    }
+
+    const loan = loans[0];
+
+    // Obtener libros
+    db.query('SELECT id, title FROM books', (err, books) => {
+      if (err) {
+        console.error("Error al obtener libros:", err);
+        return res.status(500).send('Error en el servidor');
       }
 
-      const loan = loans[0];
+      // Para usuarios normales, no mostrar selección de usuario
+      if (req.session.user.role !== 'admin') {
+        return res.render('loans/edit', { 
+          loan, 
+          books, 
+          users: null,
+          user: req.session.user
+        });
+      }
 
-      // Obtener libros y usuarios
-      db.query('SELECT id, title FROM books', (err, books) => {
+      // Si es admin, obtener usuarios
+      db.query('SELECT id, username, full_name FROM users', (err, users) => {
         if (err) {
-          console.error("Error al obtener libros:", err);
+          console.error("Error al obtener usuarios:", err);
           return res.status(500).send('Error en el servidor');
         }
 
-        db.query('SELECT id, username, full_name FROM users', (err, users) => {
-          if (err) {
-            console.error("Error al obtener usuarios:", err);
-            return res.status(500).send('Error en el servidor');
-          }
-
-          res.render('loans/edit', { 
-            loan, 
-            books, 
-            users,
-            user: req.session.user
-          });
+        res.render('loans/edit', { 
+          loan, 
+          books, 
+          users,
+          user: req.session.user
         });
       });
-    }
-  );
+    });
+  });
 };
 
 // Actualizar préstamo
 exports.updateLoan = (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.status(403).send('Acceso denegado: se requiere rol de administrador');
+  if (!req.session.user) {
+    return res.redirect('/login');
   }
 
   const loanId = req.params.id;
-  const { book_id, user_id, loan_date, status } = req.body;
+  const { book_id, loan_date, status } = req.body;
+  
+  // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
+  const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
+
+  // Preparar la consulta para verificar acceso al préstamo
+  let checkQuery = 'SELECT * FROM loans WHERE id = ?';
+  const checkParams = [loanId];
+  
+  // Si no es admin, asegurar que solo pueda modificar sus propios préstamos
+  if (req.session.user.role !== 'admin') {
+    checkQuery += ' AND user_id = ?';
+    checkParams.push(req.session.user.id);
+  }
 
   // Validar datos
-  if (!book_id || !user_id || !loan_date || !status) {
+  if (!book_id || !loan_date || !status) {
     return res.status(400).send('Por favor complete todos los campos requeridos');
   }
 
-  // Obtener información del préstamo actual para verificar cambios en el libro
-  db.query('SELECT * FROM loans WHERE id = ?', [loanId], (err, loans) => {
+  // Verificar acceso al préstamo
+  db.query(checkQuery, checkParams, (err, loans) => {
     if (err || !loans.length) {
-      console.error("Error al obtener préstamo:", err);
-      return res.status(404).send('Préstamo no encontrado');
+      console.error("Error al verificar préstamo:", err);
+      return res.status(404).send('Préstamo no encontrado o no autorizado');
     }
 
     const currentLoan = loans[0];
@@ -278,17 +329,20 @@ exports.updateLoan = (req, res) => {
 
 // Devolver libro
 exports.returnBook = (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
   const loanId = req.params.id;
-  const userId = req.session.user.id;
   
-  // Verificar que el usuario pueda devolver este libro
+  // Preparar la consulta para verificar acceso al préstamo
   let query = 'SELECT * FROM loans WHERE id = ?';
   const params = [loanId];
   
   // Si no es admin, verificar que el préstamo pertenezca al usuario
   if (req.session.user.role !== 'admin') {
     query += ' AND user_id = ?';
-    params.push(userId);
+    params.push(req.session.user.id);
   }
   
   db.query(query, params, (err, loans) => {
@@ -328,17 +382,27 @@ exports.returnBook = (req, res) => {
 
 // Eliminar préstamo
 exports.deleteLoan = (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'admin') {
-    return res.status(403).send('Acceso denegado: se requiere rol de administrador');
+  if (!req.session.user) {
+    return res.redirect('/login');
   }
 
   const loanId = req.params.id;
+  
+  // Preparar la consulta para verificar acceso al préstamo
+  let query = 'SELECT * FROM loans WHERE id = ?';
+  const params = [loanId];
+  
+  // Si no es admin, verificar que el préstamo pertenezca al usuario
+  if (req.session.user.role !== 'admin') {
+    query += ' AND user_id = ?';
+    params.push(req.session.user.id);
+  }
 
   // Obtener información del préstamo antes de eliminarlo
-  db.query('SELECT * FROM loans WHERE id = ?', [loanId], (err, loans) => {
+  db.query(query, params, (err, loans) => {
     if (err || !loans.length) {
       console.error("Error al obtener préstamo:", err);
-      return res.status(404).send('Préstamo no encontrado');
+      return res.status(404).send('Préstamo no encontrado o no autorizado');
     }
 
     const loan = loans[0];

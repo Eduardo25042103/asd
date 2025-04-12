@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="" />
     <meta name="author" content="" />
-    <title>Sistema de Préstamos - Biblioteca</title>
+    <title>Nuevo Préstamo - Biblioteca</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
     <link href="/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
@@ -78,7 +78,7 @@
                         <div class="collapse" id="collapseLoans" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                             <nav class="sb-sidenav-menu-nested nav">
                                 <a class="nav-link" href="/loans">Mis Préstamos</a>
-                                <a class="nav-link" href="/loans/nuevo">Registrar Préstamo</a>
+                                <a class="nav-link" href="/loans/new">Registrar Préstamo</a>
                             </nav>
                         </div>
                     </div>
@@ -91,64 +91,93 @@
         </div>
         <div id="layoutSidenav_content">
             <main class="me-2 ms-2 mt-2 mb-3">
-                <h1 class="mb-4">Préstamos de Libros</h1>
-                
-                <a href="/loans/nuevo" class="btn btn-primary mb-3">Registrar Nuevo Préstamo</a>
-                
-                <% if (loans && loans.length === 0) { %>
-                    <div class="alert alert-info">No hay préstamos registrados aún.</div>
-                <% } else { %>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Libro</th>
-                                    <% if (user && user.role === 'admin') { %>
-                                        <th>Usuario</th>
+                <div class="container-fluid px-4">
+                    <h1 class="mt-4">Registrar Nuevo Préstamo</h1>
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/loans">Préstamos</a></li>
+                        <li class="breadcrumb-item active">Nuevo Préstamo</li>
+                    </ol>
+                    
+                    <% if (error) { %>
+                        <div class="alert alert-danger" role="alert">
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-plus me-1"></i>
+                            Formulario de Préstamo
+                        </div>
+                        <div class="card-body">
+                            <form action="/loans/nuevo" method="POST">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <select class="form-select" id="book_id" name="book_id" required>
+                                                <option value="">Seleccione un libro</option>
+                                                <% if (books && books.length > 0) { %>
+                                                    <% books.forEach(book => { %>
+                                                        <option value="<%= book.id %>"><%= book.title %></option>
+                                                    <% }); %>
+                                                <% } %>
+                                            </select>
+                                            <label for="book_id">Libro</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <% if (user && user.role === 'admin' && users) { %>
+                                        <div class="col-md-6">
+                                            <div class="form-floating mb-3">
+                                                <select class="form-select" id="user_id" name="user_id" required>
+                                                    <option value="">Seleccione un usuario</option>
+                                                    <% users.forEach(u => { %>
+                                                        <option value="<%= u.id %>"><%= u.full_name || u.username %></option>
+                                                    <% }); %>
+                                                </select>
+                                                <label for="user_id">Usuario</label>
+                                            </div>
+                                        </div>
                                     <% } %>
-                                    <th>Fecha Préstamo</th>
-                                    <th>Fecha Devolución</th>
-                                    <th>Fecha Entrega</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% loans.forEach(loan => { %>
-                                    <tr>
-                                        <td><%= loan.id %></td>
-                                        <td><%= loan.title %></td>
-                                        <% if (user && user.role === 'admin') { %>
-                                            <td><%= loan.username %></td>
-                                        <% } %>
-                                        <td><%= loan.loan_date ? new Date(loan.loan_date).toLocaleDateString() : '-' %></td>
-                                        <td><%= loan.due_date ? new Date(loan.due_date).toLocaleDateString() : '-' %></td>
-                                        <td><%= loan.return_date ? new Date(loan.return_date).toLocaleDateString() : 'No devuelto' %></td>
-                                        <td>
-                                            <% if (loan.status === 'active') { %>
-                                                <span class="badge bg-warning">Activo</span>
-                                            <% } else if (loan.status === 'returned') { %>
-                                                <span class="badge bg-success">Devuelto</span>
-                                            <% } else if (loan.status === 'overdue') { %>
-                                                <span class="badge bg-danger">Vencido</span>
-                                            <% } else { %>
-                                                <span class="badge bg-secondary"><%= loan.status %></span>
-                                            <% } %>
-                                        </td>
-                                        <td>
-                                            <% if (loan.status === 'active' || loan.status === 'overdue') { %>
-                                                <a href="/loans/devolver/<%= loan.id %>" class="btn btn-sm btn-success">Devolver</a>
-                                            <% } %>
-                                            <a href="/loans/editar/<%= loan.id %>" class="btn btn-sm btn-warning">Editar</a>
-                                            <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este préstamo?')">Eliminar</a>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            </tbody>
-                        </table>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input class="form-control" id="loan_date" name="loan_date" type="date" required value="<%= new Date().toISOString().slice(0, 10) %>" />
+                                            <label for="loan_date">Fecha de Préstamo</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="active" selected>Activo</option>
+                                                <option value="overdue">Vencido</option>
+                                                <option value="returned">Devuelto</option>
+                                            </select>
+                                            <label for="status">Estado</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 mb-0">
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-block">Registrar Préstamo</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-footer small text-muted">
+                            La fecha de devolución se calculará automáticamente (15 días después del préstamo)
+                        </div>
                     </div>
-                <% } %>
+                    
+                    <div class="mt-3">
+                        <a href="/loans" class="btn btn-secondary">Volver a la lista de préstamos</a>
+                    </div>
+                </div>
             </main>
             <footer class="py-4 bg-light mt-auto">
                 <div class="container-fluid px-4">
@@ -166,10 +195,5 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="/js/scripts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
-    <script src="/assets/demo/chart-area-demo.js"></script>
-    <script src="/assets/demo/chart-bar-demo.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
-    <script src="/js/datatables-simple-demo.js"></script>
 </body>
 </html>
