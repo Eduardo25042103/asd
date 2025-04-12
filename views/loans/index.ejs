@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Sistema de Préstamos - Biblioteca</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+    <link href="/css/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+</head>
+<body class="sb-nav-fixed">
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <!-- Navbar Brand-->
+        <a class="navbar-brand ps-3" href="/">Sistema de Gestión</a>
+        <!-- Sidebar Toggle-->
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- Navbar Search-->
+        <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+            <div class="input-group">
+                <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
+                <button class="btn btn-primary" id="btnNavbarSearch" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+        <!-- Navbar-->
+        <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+            <% if (user) { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user fa-fw"></i> <%= user.full_name %>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="/profile">Settings</a></li>
+                        <li><a class="dropdown-item" href="/activity">Activity Log</a></li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    </ul>
+                </li>
+            <% } else { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+            <% } %>
+        </ul>
+    </nav>
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">Biblioteca</div>
+                        
+                        <% if (user && user.role === 'admin') { %>
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                                <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
+                                Libros
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="/books">Mostrar Libros</a>
+                                    <a class="nav-link" href="/books/nuevo">Crear Libros</a>
+                                </nav>
+                            </div>
+                        <% } %>
+                        
+                        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLoans" aria-expanded="false" aria-controls="collapseLoans">
+                            <div class="sb-nav-link-icon"><i class="fas fa-exchange-alt"></i></div>
+                            Préstamos
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                        </a>
+                        <div class="collapse" id="collapseLoans" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                <a class="nav-link" href="/loans">Mis Préstamos</a>
+                                <% if (user && user.role === 'admin') { %>
+                                    <a class="nav-link" href="/loans/nuevo">Registrar Préstamo</a>
+                                <% } %>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small">Logged in as:</div>
+                    <%= user ? user.full_name : 'Invitado' %>
+                </div>
+            </nav>
+        </div>
+        <div id="layoutSidenav_content">
+            <main class="me-2 ms-2 mt-2 mb-3">
+                <h1 class="mb-4">Préstamos de Libros</h1>
+                
+                <% if (user && user.role === 'admin') { %>
+                    <a href="/loans/nuevo" class="btn btn-primary mb-3">Registrar Nuevo Préstamo</a>
+                <% } %>
+                
+                <% if (loans && loans.length === 0) { %>
+                    <div class="alert alert-info">No hay préstamos registrados aún.</div>
+                <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Libro</th>
+                                    <% if (user && user.role === 'admin') { %>
+                                        <th>Usuario</th>
+                                    <% } %>
+                                    <th>Fecha Préstamo</th>
+                                    <th>Fecha Devolución</th>
+                                    <th>Fecha Entrega</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% loans.forEach(loan => { %>
+                                    <tr>
+                                        <td><%= loan.id %></td>
+                                        <td><%= loan.title %></td>
+                                        <% if (user && user.role === 'admin') { %>
+                                            <td><%= loan.username %></td>
+                                        <% } %>
+                                        <td><%= loan.loan_date ? new Date(loan.loan_date).toLocaleDateString() : '-' %></td>
+                                        <td><%= loan.due_date ? new Date(loan.due_date).toLocaleDateString() : '-' %></td>
+                                        <td><%= loan.return_date ? new Date(loan.return_date).toLocaleDateString() : 'No devuelto' %></td>
+                                        <td>
+                                            <% if (loan.status === 'active') { %>
+                                                <span class="badge bg-warning">Activo</span>
+                                            <% } else if (loan.status === 'returned') { %>
+                                                <span class="badge bg-success">Devuelto</span>
+                                            <% } else if (loan.status === 'overdue') { %>
+                                                <span class="badge bg-danger">Vencido</span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary"><%= loan.status %></span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (loan.status === 'active' || loan.status === 'overdue') { %>
+                                                <a href="/loans/devolver/<%= loan.id %>" class="btn btn-sm btn-success">Devolver</a>
+                                            <% } %>
+                                            <% if (user && user.role === 'admin') { %>
+                                                <a href="/loans/editar/<%= loan.id %>" class="btn btn-sm btn-warning">Editar</a>
+                                                <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este préstamo?')">Eliminar</a>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </main>
+            <footer class="py-4 bg-light mt-auto">
+                <div class="container-fluid px-4">
+                    <div class="d-flex align-items-center justify-content-between small">
+                        <div class="text-muted">Copyright &copy; Your Website 2023</div>
+                        <div>
+                            <a href="#">Privacy Policy</a>
+                            &middot;
+                            <a href="#">Terms &amp; Conditions</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="/js/scripts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script src="/assets/demo/chart-area-demo.js"></script>
+    <script src="/assets/demo/chart-bar-demo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+    <script src="/js/datatables-simple-demo.js"></script>
+</body>
+</html>

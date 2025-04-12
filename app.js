@@ -4,6 +4,7 @@ const session = require('express-session');
 
 const authRoutes = require('./routes/authRoutes');
 const libroRoutes = require('./routes/libroRoutes');
+const loanRoutes = require('./routes/loanRoutes'); // Añadimos las rutas de préstamos
 
 const app = express();
 
@@ -26,16 +27,29 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(authRoutes);
-app.use('/books', libroRoutes);
+// Middleware para proteger rutas
+const isAuthenticated = (req, res, next) => {
+  if (req.session.user) {
+    return next();
+  }
+  res.redirect('/login');
+};
 
-app.get('/books/index', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
-  res.send(`Bienvenido ${req.session.user.username} con rol ${req.session.user.role}`);
-});
+app.use(authRoutes);
+app.use('/books', isAuthenticated, libroRoutes);
+app.use('/loans', isAuthenticated, loanRoutes);
+
+// Eliminamos la ruta /books/index que ya no se utiliza
 
 app.get('/', (req, res) => {
-  res.redirect('/books/index');
+  if (req.session.user) {
+    if (req.session.user.role === 'admin') {
+      return res.redirect('/books');
+    } else {
+      return res.redirect('/loans');
+    }
+  }
+  res.redirect('/login');
 });
 
 const PORT = process.env.PORT || 3000;
