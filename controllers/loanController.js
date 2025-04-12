@@ -81,9 +81,11 @@ exports.createLoan = (req, res) => {
     return res.redirect('/login');
   }
 
-  const { book_id, loan_date, status } = req.body;
+  const { book_id, loan_date } = req.body;
   // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
   const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
+  // Por defecto, estado activo para nuevos préstamos
+  const status = 'active';
 
   // Validar datos
   if (!book_id || !loan_date) {
@@ -119,7 +121,7 @@ exports.createLoan = (req, res) => {
     VALUES (?, ?, ?, ?, ?)
   `;
 
-  db.query(query, [book_id, user_id, loan_date, dueDate, status || 'active'], (err, result) => {
+  db.query(query, [book_id, user_id, loan_date, dueDate, status], (err, result) => {
     if (err) {
       console.error("Error al crear préstamo:", err);
       return res.status(500).send('Error en el servidor');
@@ -208,7 +210,7 @@ exports.updateLoan = (req, res) => {
   }
 
   const loanId = req.params.id;
-  const { book_id, loan_date, status } = req.body;
+  const { book_id, loan_date } = req.body;
   
   // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
   const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
@@ -224,7 +226,7 @@ exports.updateLoan = (req, res) => {
   }
 
   // Validar datos
-  if (!book_id || !loan_date || !status) {
+  if (!book_id || !loan_date) {
     return res.status(400).send('Por favor complete todos los campos requeridos');
   }
 
@@ -237,7 +239,7 @@ exports.updateLoan = (req, res) => {
 
     const currentLoan = loans[0];
     const prevBookId = currentLoan.book_id;
-    const prevStatus = currentLoan.status;
+    const status = currentLoan.status; // Mantener el estado actual, no permitir cambios
 
     // Calcular nueva fecha de vencimiento si se cambió la fecha de préstamo
     const loanDateObj = new Date(loan_date);
@@ -247,11 +249,11 @@ exports.updateLoan = (req, res) => {
     // Actualizar préstamo
     const query = `
       UPDATE loans 
-      SET book_id = ?, user_id = ?, loan_date = ?, due_date = ?, status = ?
+      SET book_id = ?, user_id = ?, loan_date = ?, due_date = ?
       WHERE id = ?
     `;
 
-    db.query(query, [book_id, user_id, loan_date, dueDate, status, loanId], (err, result) => {
+    db.query(query, [book_id, user_id, loan_date, dueDate, loanId], (err, result) => {
       if (err) {
         console.error("Error al actualizar préstamo:", err);
         return res.status(500).send('Error en el servidor');
@@ -259,64 +261,30 @@ exports.updateLoan = (req, res) => {
 
       // Manejar cambios en libros (actualizar copias disponibles)
       const handleBookChanges = () => {
-        // Si se cambió el libro o el estado cambió a/desde 'returned'
-        if (prevBookId != book_id || prevStatus !== status) {
-          // Ajustar copias disponibles de libros afectados
-          if (prevBookId != book_id) {
-            // Incrementar copias disponibles del libro anterior
-            db.query(
-              'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
-              [prevBookId],
-              (err) => {
-                if (err) {
-                  console.error("Error al actualizar copias disponibles del libro anterior:", err);
-                }
-
-                // Decrementar copias disponibles del nuevo libro
-                db.query(
-                  'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
-                  [book_id],
-                  (err) => {
-                    if (err) {
-                      console.error("Error al actualizar copias disponibles del nuevo libro:", err);
-                    }
-                    res.redirect('/loans');
-                  }
-                );
+        // Si se cambió el libro
+        if (prevBookId != book_id) {
+          // Incrementar copias disponibles del libro anterior
+          db.query(
+            'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
+            [prevBookId],
+            (err) => {
+              if (err) {
+                console.error("Error al actualizar copias disponibles del libro anterior:", err);
               }
-            );
-          } else if (prevStatus !== status) {
-            // Ajustar copias disponibles según cambio de estado
-            if (status === 'returned' && prevStatus !== 'returned') {
-              // Incrementar copias disponibles si se devuelve
-              db.query(
-                'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
-                [book_id],
-                (err) => {
-                  if (err) {
-                    console.error("Error al actualizar copias disponibles:", err);
-                  }
-                  res.redirect('/loans');
-                }
-              );
-            } else if (status !== 'returned' && prevStatus === 'returned') {
-              // Decrementar copias disponibles si se cambia de devuelto a otro estado
+
+              // Decrementar copias disponibles del nuevo libro
               db.query(
                 'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
                 [book_id],
                 (err) => {
                   if (err) {
-                    console.error("Error al actualizar copias disponibles:", err);
+                    console.error("Error al actualizar copias disponibles del nuevo libro:", err);
                   }
                   res.redirect('/loans');
                 }
               );
-            } else {
-              res.redirect('/loans');
             }
-          } else {
-            res.redirect('/loans');
-          }
+          );
         } else {
           res.redirect('/loans');
         }

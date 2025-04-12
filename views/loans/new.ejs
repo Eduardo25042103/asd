@@ -78,7 +78,7 @@
                         <div class="collapse" id="collapseLoans" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                             <nav class="sb-sidenav-menu-nested nav">
                                 <a class="nav-link" href="/loans">Mis Préstamos</a>
-                                <a class="nav-link" href="/loans/new">Registrar Préstamo</a>
+                                <a class="nav-link" href="/loans/nuevo">Registrar Préstamo</a>
                             </nav>
                         </div>
                     </div>
@@ -150,14 +150,11 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- Eliminamos el selector de estado, será siempre 'active' por defecto -->
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <select class="form-select" id="status" name="status">
-                                                <option value="active" selected>Activo</option>
-                                                <option value="overdue">Vencido</option>
-                                                <option value="returned">Devuelto</option>
-                                            </select>
-                                            <label for="status">Estado</label>
+                                            <input class="form-control" id="status_display" type="text" readonly value="Activo" />
+                                            <label for="status_display">Estado (por defecto)</label>
                                         </div>
                                     </div>
                                 </div>
