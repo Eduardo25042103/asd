@@ -136,13 +136,17 @@
                                                 <span class="badge bg-secondary"><%= loan.status %></span>
                                             <% } %>
                                         </td>
-                                        <td>
-                                            <% if (loan.status === 'active' || loan.status === 'overdue') { %>
-                                                <a href="/loans/devolver/<%= loan.id %>" class="btn btn-sm btn-success">Devolver</a>
-                                            <% } %>
-                                            <a href="/loans/editar/<%= loan.id %>" class="btn btn-sm btn-warning">Editar</a>
-                                            <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este préstamo?')">Eliminar</a>
-                                        </td>
+<td>
+    <% if (loan.status === 'active' || loan.status === 'overdue') { %>
+        <a href="/loans/devolver/<%= loan.id %>" class="btn btn-sm btn-success">Devolver</a>
+    <% } else if (loan.status === 'returned') { %>
+        <a href="/loans/reactivar/<%= loan.id %>" class="btn btn-sm btn-warning">Deshacer devolución</a>
+    <% } %>
+    <a href="/loans/editar/<%= loan.id %>" class="btn btn-sm btn-warning">Editar</a>
+    <% if (user && user.role === 'admin') { %>
+        <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este préstamo?')">Eliminar</a>
+    <% } %>
+</td>
                                     </tr>
                                 <% }); %>
                             </tbody>

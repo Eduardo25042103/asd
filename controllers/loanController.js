@@ -1,36 +1,51 @@
 const db = require('../database/db');
 
 // Obtener todos los préstamos
+// Modificación opcional para garantizar que los estados de los préstamos sean precisos
 exports.getAllLoans = (req, res) => {
   // Verificar que el usuario esté autenticado
   if (!req.session.user) {
     return res.redirect('/login');
   }
 
-  // Consulta para obtener préstamos, posiblemente filtrada por usuario si no es admin
-  let query = `
-    SELECT loans.id, books.title, users.username, 
-           loans.loan_date, loans.due_date, loans.return_date, loans.status
-    FROM loans
-    INNER JOIN books ON loans.book_id = books.id
-    INNER JOIN users ON loans.user_id = users.id
+  // Primero, actualizar estados de préstamos vencidos
+  const today = new Date().toISOString().slice(0, 10);
+  const updateStatusQuery = `
+    UPDATE loans 
+    SET status = 'vencido' 
+    WHERE due_date < ? AND status = 'active'
   `;
-
-  // Si es un usuario normal, solo muestra sus préstamos
-  const params = [];
-  if (req.session.user.role !== 'admin') {
-    query += ' WHERE loans.user_id = ?';
-    params.push(req.session.user.id);
-  }
-
-  db.query(query, params, (err, results) => {
+  
+  db.query(updateStatusQuery, [today], (err) => {
     if (err) {
-      console.error("Error al obtener préstamos:", err);
-      return res.status(500).send('Error en el servidor');
+      console.error("Error al actualizar estados de préstamos:", err);
     }
-    res.render('loans/index', { 
-      loans: results,
-      user: req.session.user
+    
+    // Ahora obtener los préstamos con estados actualizados
+    let query = `
+      SELECT loans.id, books.title, users.username, 
+             loans.loan_date, loans.due_date, loans.return_date, loans.status
+      FROM loans
+      INNER JOIN books ON loans.book_id = books.id
+      INNER JOIN users ON loans.user_id = users.id
+    `;
+
+    // Si es un usuario normal, solo muestra sus préstamos
+    const params = [];
+    if (req.session.user.role !== 'admin') {
+      query += ' WHERE loans.user_id = ?';
+      params.push(req.session.user.id);
+    }
+
+    db.query(query, params, (err, results) => {
+      if (err) {
+        console.error("Error al obtener préstamos:", err);
+        return res.status(500).send('Error en el servidor');
+      }
+      res.render('loans/index', { 
+        loans: results,
+        user: req.session.user
+      });
     });
   });
 };
@@ -41,8 +56,15 @@ exports.getNewLoanForm = (req, res) => {
     return res.redirect('/login');
   }
 
-  // Obtener libros disponibles
-  db.query('SELECT id, title FROM books WHERE available_copies > 0', (err, books) => {
+  // Obtener libros disponibles - para admins mostrar todos los libros
+  let booksQuery = 'SELECT id, title FROM books';
+  
+  // Para usuarios normales solo mostrar libros con copias disponibles
+  if (req.session.user.role !== 'admin') {
+    booksQuery += ' WHERE available_copies > 0';
+  }
+  
+  db.query(booksQuery, (err, books) => {
     if (err) {
       console.error("Error al obtener libros:", err);
       return res.status(500).send('Error en el servidor');
@@ -88,8 +110,8 @@ exports.createLoan = (req, res) => {
   const status = 'active';
 
   // Validar datos
-  if (!book_id || !loan_date) {
-    return db.query('SELECT id, title FROM books WHERE available_copies > 0', (err, books) => {
+  if (!book_id || !loan_date || (req.session.user.role === 'admin' && !req.body.user_id)) {
+    return db.query('SELECT id, title FROM books', (err, books) => {
       if (req.session.user.role === 'admin') {
         db.query('SELECT id, username, full_name FROM users', (err, users) => {
           res.render('loans/new', { 
@@ -115,7 +137,7 @@ exports.createLoan = (req, res) => {
   const dueDate = new Date(loanDateObj);
   dueDate.setDate(dueDate.getDate() + 15);
 
-  // Crear el préstamo
+  // Crear el préstamo - sin verificar disponibilidad para admin
   const query = `
     INSERT INTO loans (book_id, user_id, loan_date, due_date, status)
     VALUES (?, ?, ?, ?, ?)
@@ -128,16 +150,31 @@ exports.createLoan = (req, res) => {
     }
 
     // Actualizar la cantidad de copias disponibles del libro
-    db.query(
-      'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
-      [book_id],
-      (err) => {
-        if (err) {
-          console.error("Error al actualizar copias disponibles:", err);
+    // Solo decrementar si hay copias disponibles o si el usuario es normal
+    if (req.session.user.role !== 'admin') {
+      db.query(
+        'UPDATE books SET available_copies = available_copies - 1 WHERE id = ? AND available_copies > 0',
+        [book_id],
+        (err) => {
+          if (err) {
+            console.error("Error al actualizar copias disponibles:", err);
+          }
+          res.redirect('/loans');
         }
-        res.redirect('/loans');
-      }
-    );
+      );
+    } else {
+      // Para admin, actualizar sin verificar disponibilidad
+      db.query(
+        'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
+        [book_id],
+        (err) => {
+          if (err) {
+            console.error("Error al actualizar copias disponibles:", err);
+          }
+          res.redirect('/loans');
+        }
+      );
+    }
   });
 };
 
@@ -168,38 +205,47 @@ exports.getEditLoanForm = (req, res) => {
 
     const loan = loans[0];
 
-    // Obtener libros
-    db.query('SELECT id, title FROM books', (err, books) => {
-      if (err) {
-        console.error("Error al obtener libros:", err);
-        return res.status(500).send('Error en el servidor');
-      }
-
-      // Para usuarios normales, no mostrar selección de usuario
-      if (req.session.user.role !== 'admin') {
+    // Obtener todos los libros para admin, solo disponibles para usuarios normales
+    let booksQuery = 'SELECT id, title FROM books';
+    if (req.session.user.role !== 'admin') {
+      booksQuery += ' WHERE available_copies > 0 OR id = ?';
+      db.query(booksQuery, [loan.book_id], (err, books) => {
+        if (err) {
+          console.error("Error al obtener libros:", err);
+          return res.status(500).send('Error en el servidor');
+        }
+        
         return res.render('loans/edit', { 
           loan, 
           books, 
           users: null,
           user: req.session.user
         });
-      }
-
-      // Si es admin, obtener usuarios
-      db.query('SELECT id, username, full_name FROM users', (err, users) => {
+      });
+    } else {
+      // Para admin obtener todos los libros
+      db.query(booksQuery, (err, books) => {
         if (err) {
-          console.error("Error al obtener usuarios:", err);
+          console.error("Error al obtener libros:", err);
           return res.status(500).send('Error en el servidor');
         }
+        
+        // Si es admin, obtener usuarios
+        db.query('SELECT id, username, full_name FROM users', (err, users) => {
+          if (err) {
+            console.error("Error al obtener usuarios:", err);
+            return res.status(500).send('Error en el servidor');
+          }
 
-        res.render('loans/edit', { 
-          loan, 
-          books, 
-          users,
-          user: req.session.user
+          res.render('loans/edit', { 
+            loan, 
+            books, 
+            users,
+            user: req.session.user
+          });
         });
       });
-    });
+    }
   });
 };
 
@@ -210,7 +256,7 @@ exports.updateLoan = (req, res) => {
   }
 
   const loanId = req.params.id;
-  const { book_id, loan_date } = req.body;
+  const { book_id, loan_date, status } = req.body;
   
   // Si es admin, toma el user_id del formulario, si no, usa el del usuario actual
   const user_id = req.session.user.role === 'admin' ? req.body.user_id : req.session.user.id;
@@ -239,7 +285,10 @@ exports.updateLoan = (req, res) => {
 
     const currentLoan = loans[0];
     const prevBookId = currentLoan.book_id;
-    const status = currentLoan.status; // Mantener el estado actual, no permitir cambios
+    const prevStatus = currentLoan.status;
+    
+    // Determinar si debemos actualizar el estado
+    const newStatus = req.session.user.role === 'admin' && status ? status : prevStatus;
 
     // Calcular nueva fecha de vencimiento si se cambió la fecha de préstamo
     const loanDateObj = new Date(loan_date);
@@ -247,13 +296,23 @@ exports.updateLoan = (req, res) => {
     dueDate.setDate(dueDate.getDate() + 15);
 
     // Actualizar préstamo
-    const query = `
+    let updateQuery = `
       UPDATE loans 
       SET book_id = ?, user_id = ?, loan_date = ?, due_date = ?
-      WHERE id = ?
     `;
+    
+    let updateParams = [book_id, user_id, loan_date, dueDate];
+    
+    // Admin puede actualizar también el estado
+    if (req.session.user.role === 'admin') {
+      updateQuery += `, status = ?`;
+      updateParams.push(newStatus);
+    }
+    
+    updateQuery += ` WHERE id = ?`;
+    updateParams.push(loanId);
 
-    db.query(query, [book_id, user_id, loan_date, dueDate, loanId], (err, result) => {
+    db.query(updateQuery, updateParams, (err, result) => {
       if (err) {
         console.error("Error al actualizar préstamo:", err);
         return res.status(500).send('Error en el servidor');
@@ -261,8 +320,8 @@ exports.updateLoan = (req, res) => {
 
       // Manejar cambios en libros (actualizar copias disponibles)
       const handleBookChanges = () => {
-        // Si se cambió el libro
-        if (prevBookId != book_id) {
+        // Si se cambió el libro y el usuario es admin o si el préstamo no estaba devuelto
+        if (prevBookId != book_id && (req.session.user.role === 'admin' || prevStatus !== 'returned')) {
           // Incrementar copias disponibles del libro anterior
           db.query(
             'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
@@ -283,6 +342,30 @@ exports.updateLoan = (req, res) => {
                   res.redirect('/loans');
                 }
               );
+            }
+          );
+        } else if (prevStatus !== 'returned' && newStatus === 'returned') {
+          // Si el préstamo se está marcando como devuelto
+          db.query(
+            'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
+            [book_id],
+            (err) => {
+              if (err) {
+                console.error("Error al actualizar copias disponibles:", err);
+              }
+              res.redirect('/loans');
+            }
+          );
+        } else if (prevStatus === 'returned' && newStatus !== 'returned') {
+          // Si el préstamo se está marcando como no devuelto (solo admin puede hacer esto)
+          db.query(
+            'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
+            [book_id],
+            (err) => {
+              if (err) {
+                console.error("Error al actualizar copias disponibles:", err);
+              }
+              res.redirect('/loans');
             }
           );
         } else {
@@ -321,6 +404,11 @@ exports.returnBook = (req, res) => {
     
     const loan = loans[0];
     
+    // Verificar que el préstamo no esté ya en estado "returned"
+    if (loan.status === 'returned') {
+      return res.status(400).send('El préstamo ya ha sido devuelto');
+    }
+    
     // Actualizar préstamo a estado "returned" y establecer fecha de devolución
     const returnDate = new Date().toISOString().slice(0, 10);
     db.query(
@@ -335,6 +423,62 @@ exports.returnBook = (req, res) => {
         // Incrementar copias disponibles del libro
         db.query(
           'UPDATE books SET available_copies = available_copies + 1 WHERE id = ?',
+          [loan.book_id],
+          (err) => {
+            if (err) {
+              console.error("Error al actualizar copias disponibles:", err);
+            }
+            res.redirect('/loans');
+          }
+        );
+      }
+    );
+  });
+};
+
+exports.reactivateLoan = (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
+  const loanId = req.params.id;
+  
+  // Preparar la consulta para verificar acceso al préstamo
+  let query = 'SELECT * FROM loans WHERE id = ?';
+  const params = [loanId];
+  
+  // Si no es admin, verificar que el préstamo pertenezca al usuario
+  if (req.session.user.role !== 'admin') {
+    query += ' AND user_id = ?';
+    params.push(req.session.user.id);
+  }
+  
+  db.query(query, params, (err, loans) => {
+    if (err || !loans.length) {
+      console.error("Error al obtener préstamo:", err);
+      return res.status(404).send('Préstamo no encontrado o no autorizado');
+    }
+    
+    const loan = loans[0];
+    
+    // Verificar que el préstamo esté en estado "returned"
+    if (loan.status !== 'returned') {
+      return res.status(400).send('Solo se pueden reactivar préstamos devueltos');
+    }
+    
+    // Actualizar préstamo a estado "active" y eliminar fecha de devolución
+    db.query(
+      'UPDATE loans SET status = ?, return_date = ? WHERE id = ?',
+      ['active', null, loanId],
+      (err, result) => {
+        if (err) {
+          console.error("Error al actualizar préstamo:", err);
+          return res.status(500).send('Error en el servidor');
+        }
+        
+        // Decrementar copias disponibles del libro (ya que se vuelve a prestar)
+        db.query(
+          'UPDATE books SET available_copies = available_copies - 1 WHERE id = ?',
           [loan.book_id],
           (err) => {
             if (err) {
