@@ -82,55 +82,69 @@
 
                 <form action="/books/editar/<%= book.id %>" method="POST">
                   <div class="mb-3">
-                    <label for="title" class="form-label">Título:</label>
-                    <input type="text" class="form-control" name="title" value="<%= book.title %>" required>
-                  </div>
-              
-                  <div class="mb-3">
-                    <label for="author_id" class="form-label">Autor:</label>
-                    <select class="form-select" name="author_id">
-                      <option value="">-- Seleccione un autor existente --</option>
+                    <label for="author_ids" class="form-label">Autores:</label>
+                    <select class="form-select" name="author_ids" multiple>
                       <% authors.forEach(author => { %>
-                        <option value="<%= author.id %>" <%= book.author_id === author.id ? 'selected' : '' %>><%= author.name %></option>
+                        <option value="<%= author.id %>" <%= bookAuthorIds.includes(author.id) ? 'selected' : '' %>><%= author.name %></option>
                       <% }); %>
                     </select>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples autores</div>
                   </div>
-              
+                  
+                  <!-- Campo para nuevos autores -->
                   <div class="mb-3">
-                    <p class="form-text">O ingrese un nuevo autor:</p>
-                    <label for="new_author_name" class="form-label">Nombre del Nuevo Autor:</label>
-                    <input type="text" class="form-control" name="new_author_name">
-                    <label for="new_author_bio" class="form-label mt-2">Biografía (opcional):</label>
-                    <textarea class="form-control" name="new_author_bio" rows="3"></textarea>
+                    <label for="new_author_names" class="form-label">Agregar nuevos autores:</label>
+                    <div id="new-authors-container">
+                      <div class="input-group mb-2">
+                        <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
+                        <button type="button" class="btn btn-outline-secondary add-author-field">+</button>
+                      </div>
+                    </div>
                   </div>
-              
+                  
+                  <!-- Campos para editorial y año -->
                   <div class="mb-3">
                     <label for="publisher" class="form-label">Editorial:</label>
-                    <input type="text" class="form-control" name="publisher" value="<%= book.publisher %>">
+                    <input type="text" class="form-control" name="publisher" value="<%= book.publisher || '' %>">
                   </div>
-              
+                  
                   <div class="mb-3">
                     <label for="year" class="form-label">Año:</label>
-                    <input type="number" class="form-control" name="year" value="<%= book.year %>">
+                    <input type="number" class="form-control" name="year" value="<%= book.year || '' %>">
                   </div>
-              
+                  
+                  <!-- Reemplazo del campo de categoría por un select múltiple -->
                   <div class="mb-3">
-                    <label for="category" class="form-label">Categoría:</label>
-                    <input type="text" class="form-control" name="category" value="<%= book.category %>">
+                    <label for="category_ids" class="form-label">Categorías:</label>
+                    <select class="form-select" name="category_ids" multiple>
+                      <% categories.forEach(category => { %>
+                        <option value="<%= category.id %>" <%= bookCategoryIds.includes(category.id) ? 'selected' : '' %>><%= category.name %></option>
+                      <% }); %>
+                    </select>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples categorías</div>
                   </div>
-              
+                  
+                  <!-- Campo para nuevas categorías -->
+                  <div class="mb-3">
+                    <label for="new_category_names" class="form-label">Agregar nuevas categorías:</label>
+                    <div id="new-categories-container">
+                      <div class="input-group mb-2">
+                        <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
+                        <button type="button" class="btn btn-outline-secondary add-category-field">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Campos para copias -->
                   <div class="mb-3">
                     <label for="total_copies" class="form-label">Copias Totales:</label>
                     <input type="number" class="form-control" name="total_copies" value="<%= book.total_copies %>" required>
                   </div>
-              
+                  
                   <div class="mb-3">
                     <label for="available_copies" class="form-label">Copias Disponibles:</label>
                     <input type="number" class="form-control" name="available_copies" value="<%= book.available_copies %>" required>
                   </div>
-              
-                  <button type="submit" class="btn btn-primary">Actualizar Libro</button>
-                  <a href="/books" class="btn btn-secondary">Cancelar</a>
                 </form>
 
                 
@@ -158,5 +172,46 @@
         <script src="/assets/demo/chart-bar-demo.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script src="/js/datatables-simple-demo.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // Agregar campo para nuevo autor
+            document.querySelectorAll('.add-author-field').forEach(button => {
+              button.addEventListener('click', function() {
+                const container = document.getElementById('new-authors-container');
+                const newField = document.createElement('div');
+                newField.className = 'input-group mb-2';
+                newField.innerHTML = `
+                  <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
+                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
+                `;
+                container.appendChild(newField);
+                
+                // Agregar evento para eliminar campo
+                newField.querySelector('.remove-field').addEventListener('click', function() {
+                  container.removeChild(newField);
+                });
+              });
+            });
+            
+            // Agregar campo para nueva categoría
+            document.querySelectorAll('.add-category-field').forEach(button => {
+              button.addEventListener('click', function() {
+                const container = document.getElementById('new-categories-container');
+                const newField = document.createElement('div');
+                newField.className = 'input-group mb-2';
+                newField.innerHTML = `
+                  <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
+                  <button type="button" class="btn btn-outline-danger remove-field">-</button>
+                `;
+                container.appendChild(newField);
+                
+                // Agregar evento para eliminar campo
+                newField.querySelector('.remove-field').addEventListener('click', function() {
+                  container.removeChild(newField);
+                });
+              });
+            });
+          });
+          </script>
     </body>
 </html>

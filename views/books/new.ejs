@@ -90,21 +90,19 @@
                   </div>
               
                   <div class="mb-3">
-                    <label for="author_id" class="form-label">Seleccionar Autor Existente:</label>
-                    <select class="form-select" name="author_id">
-                      <option value="">-- Seleccione un autor --</option>
+                    <label for="author_ids" class="form-label">Seleccionar Autores:</label>
+                    <select class="form-select" name="author_ids" multiple size="5">
                       <% authors.forEach(author => { %>
                         <option value="<%= author.id %>"><%= author.name %></option>
                       <% }); %>
                     </select>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Command en Mac) para seleccionar múltiples autores</div>
                   </div>
               
                   <div class="mb-3">
-                    <p class="form-text">O ingrese un nuevo autor:</p>
-                    <label for="new_author_name" class="form-label">Nombre del Nuevo Autor:</label>
-                    <input type="text" class="form-control" name="new_author_name">
-                    <label for="new_author_bio" class="form-label mt-2">Biografía (opcional):</label>
-                    <textarea class="form-control" name="new_author_bio" rows="3"></textarea>
+                    <p class="form-text">O ingrese nuevos autores (uno por línea):</p>
+                    <label for="new_author_names" class="form-label">Nuevos Autores:</label>
+                    <textarea class="form-control" name="new_author_names" rows="3" placeholder="Un autor por línea"></textarea>
                   </div>
               
                   <div class="mb-3">
@@ -118,8 +116,19 @@
                   </div>
               
                   <div class="mb-3">
-                    <label for="category" class="form-label">Categoría:</label>
-                    <input type="text" class="form-control" name="category">
+                    <label for="category_ids" class="form-label">Seleccionar Categorías:</label>
+                    <select class="form-select" name="category_ids" multiple size="5">
+                      <% categories.forEach(category => { %>
+                        <option value="<%= category.id %>"><%= category.name %></option>
+                      <% }); %>
+                    </select>
+                    <div class="form-text">Mantenga presionada la tecla Ctrl (o Command en Mac) para seleccionar múltiples categorías</div>
+                  </div>
+              
+                  <div class="mb-3">
+                    <p class="form-text">O ingrese nuevas categorías (una por línea):</p>
+                    <label for="new_category_names" class="form-label">Nuevas Categorías:</label>
+                    <textarea class="form-control" name="new_category_names" rows="3" placeholder="Una categoría por línea"></textarea>
                   </div>
               
                   <div class="mb-3">
