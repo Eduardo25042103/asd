@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const loanController = require('../controllers/loanController');
 
-// Middleware para verificar autenticación
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     return next();
@@ -10,7 +9,6 @@ const isAuthenticated = (req, res, next) => {
   res.redirect('/login');
 };
 
-// Rutas para préstamos - ahora todas solo requieren autenticación
 router.get('/', isAuthenticated, loanController.getAllLoans);
 router.get('/nuevo', isAuthenticated, loanController.getNewLoanForm);
 router.post('/nuevo', isAuthenticated, loanController.createLoan);

@@ -11272,3 +11272,61 @@ body {
   color: #0d6efd;
   margin-bottom: 20px;
 }
+.form-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  background-color: #fff;
+}
+.page-title {
+  color: #212529;
+  font-weight: 600;
+  border-bottom: 2px solid #6c757d;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.field-group {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.field-group-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: #495057;
+}
+.btn-action {
+  min-width: 120px;
+}
+.select-container {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+.select-container .form-text {
+  position: absolute;
+  right: 0;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+.add-item-btn {
+  margin-top: 0.5rem;
+}
+.counter-badge {
+  background-color: #6c757d;
+  color: white;
+  border-radius: 50%;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+.input-group .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.input-group .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+} 

@@ -1,4 +1,3 @@
-// controllers/authController.js
 const db = require('../database/db');
 const bcrypt = require('bcryptjs');
 
@@ -6,7 +5,6 @@ exports.showLogin = (req, res) => {
   res.render('login');
 };
 
-// controllers/authController.js
 exports.login = (req, res) => {
     const { email, password } = req.body;
   
@@ -34,7 +32,6 @@ exports.login = (req, res) => {
         role: user.role
       };
       
-      // Redirección basada en el rol del usuario
       if (user.role === 'admin') {
         res.redirect('/books');
       } else {

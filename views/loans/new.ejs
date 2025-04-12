@@ -90,32 +90,35 @@
             </nav>
         </div>
         <div id="layoutSidenav_content">
-            <main class="me-2 ms-2 mt-2 mb-3">
+            <main class="py-4">
                 <div class="container-fluid px-4">
-                    <h1 class="mt-4">Registrar Nuevo Préstamo</h1>
-                    <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-                        <li class="breadcrumb-item"><a href="/loans">Préstamos</a></li>
-                        <li class="breadcrumb-item active">Nuevo Préstamo</li>
-                    </ol>
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800">Registrar Nuevo Préstamo</h1>
+                        <ol class="breadcrumb bg-light py-2 px-3 mb-0 rounded">
+                            <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home me-1"></i>Inicio</a></li>
+                            <li class="breadcrumb-item"><a href="/loans" class="text-decoration-none">Préstamos</a></li>
+                            <li class="breadcrumb-item active">Nuevo Préstamo</li>
+                        </ol>
+                    </div>
                     
                     <% if (error) { %>
-                        <div class="alert alert-danger" role="alert">
+                        <div class="alert alert-danger shadow-sm" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
                             <%= error %>
                         </div>
                     <% } %>
                     
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-plus me-1"></i>
-                            Formulario de Préstamo
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex align-items-center">
+                            <i class="fas fa-plus-circle me-2 text-primary"></i>
+                            <h6 class="m-0 font-weight-bold">Formulario de Préstamo</h6>
                         </div>
                         <div class="card-body">
                             <form action="/loans/nuevo" method="POST">
-                                <div class="row mb-3">
+                                <div class="row mb-4">
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <select class="form-select" id="book_id" name="book_id" required>
+                                            <select class="form-select shadow-sm" id="book_id" name="book_id" required>
                                                 <option value="">Seleccione un libro</option>
                                                 <% if (books && books.length > 0) { %>
                                                     <% books.forEach(book => { %>
@@ -130,7 +133,7 @@
                                     <% if (user && user.role === 'admin' && users) { %>
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
-                                                <select class="form-select" id="user_id" name="user_id" required>
+                                                <select class="form-select shadow-sm" id="user_id" name="user_id" required>
                                                     <option value="">Seleccione un usuario</option>
                                                     <% users.forEach(u => { %>
                                                         <option value="<%= u.id %>"><%= u.full_name || u.username %></option>
@@ -142,39 +145,48 @@
                                     <% } %>
                                 </div>
                                 
-                                <div class="row mb-3">
+                                <div class="row mb-4">
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <input class="form-control" id="loan_date" name="loan_date" type="date" required value="<%= new Date().toISOString().slice(0, 10) %>" />
+                                            <input class="form-control shadow-sm" id="loan_date" name="loan_date" type="date" required value="<%= new Date().toISOString().slice(0, 10) %>" />
                                             <label for="loan_date">Fecha de Préstamo</label>
                                         </div>
                                     </div>
                                     
-                                    <!-- Campo oculto para el estado, siempre será 'activo' por defecto -->
                                     <input type="hidden" name="status" value="activo" />
                                     
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <input class="form-control" id="status_display" type="text" readonly value="Activo" />
+                                            <input class="form-control shadow-sm bg-light" id="status_display" type="text" readonly value="Activo" />
                                             <label for="status_display">Estado (por defecto)</label>
                                         </div>
                                     </div>
                                 </div>
                                 
+                                <div class="alert alert-info shadow-sm mb-4">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    La fecha de devolución se establecerá automáticamente para 15 días después de la fecha de préstamo.
+                                </div>
+                                
                                 <div class="mt-4 mb-0">
                                     <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary btn-block">Registrar Préstamo</button>
+                                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                            <i class="fas fa-save me-2"></i>Registrar Préstamo
+                                        </button>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         <div class="card-footer small text-muted">
-                            La fecha de devolución se calculará automáticamente (15 días después del préstamo)
+                            <i class="fas fa-calendar-check me-1"></i>
+                            Los préstamos tienen una duración estándar de 15 días
                         </div>
                     </div>
                     
                     <div class="mt-3">
-                        <a href="/loans" class="btn btn-secondary">Volver a la lista de préstamos</a>
+                        <a href="/loans" class="btn btn-secondary shadow-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Volver a la lista de préstamos
+                        </a>
                     </div>
                 </div>
             </main>

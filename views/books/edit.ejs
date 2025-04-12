@@ -87,89 +87,119 @@
                 </nav>
             </div>
             <div id="layoutSidenav_content">
-              <main class="me-2 ms-2 mt-2 mb-3">
+              <div class="col-12 mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/books">Libros</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Editar Libro</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-12">
+                <div class="form-card">
+                    <h1 class="page-title">
+                        <i class="fas fa-edit me-2"></i>Editar Libro
+                    </h1>
                     
-                <h1 class="mb-4">Editar Libro</h1>
-
-                <form action="/books/editar/<%= book.id %>" method="POST">
-                  <div class="mb-3">
-                    <label for="title" class="form-label">Título:</label>
-                    <input type="text" class="form-control" name="title" value="<%= book.title %>" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="author_ids" class="form-label">Autores:</label>
-                    <select class="form-select" name="author_ids" multiple>
-                      <% authors.forEach(author => { %>
-                        <option value="<%= author.id %>" <%= bookAuthorIds.includes(author.id) ? 'selected' : '' %>><%= author.name %></option>
-                      <% }); %>
-                    </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl</div>
-                  </div>
-                  
-                  <!-- Campo para nuevos autores -->
-                  <div class="mb-3">
-                    <label for="new_author_names" class="form-label">Agregar nuevos autores:</label>
-                    <div id="new-authors-container">
-                      <div class="input-group mb-2">
-                        <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
-                        <button type="button" class="btn btn-outline-secondary add-author-field">+</button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Campos para editorial y año -->
-                  <div class="mb-3">
-                    <label for="publisher" class="form-label">Editorial:</label>
-                    <input type="text" class="form-control" name="publisher" value="<%= book.publisher || '' %>">
-                  </div>
-                  
-                  <div class="mb-3">
-                    <label for="year" class="form-label">Año:</label>
-                    <input type="number" class="form-control" name="year" value="<%= book.year || '' %>">
-                  </div>
-                  
-                  <!-- Reemplazo del campo de categoría por un select múltiple -->
-                  <div class="mb-3">
-                    <label for="category_ids" class="form-label">Categorías:</label>
-                    <select class="form-select" name="category_ids" multiple>
-                      <% categories.forEach(category => { %>
-                        <option value="<%= category.id %>" <%= bookCategoryIds.includes(category.id) ? 'selected' : '' %>><%= category.name %></option>
-                      <% }); %>
-                    </select>
-                    <div class="form-text">Mantenga presionada la tecla Ctrl</div>
-                  </div>
-                  
-                  <!-- Campo para nuevas categorías -->
-                  <div class="mb-3">
-                    <label for="new_category_names" class="form-label">Agregar nuevas categorías:</label>
-                    <div id="new-categories-container">
-                      <div class="input-group mb-2">
-                        <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
-                        <button type="button" class="btn btn-outline-secondary add-category-field">+</button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Campos para copias -->
-                  <div class="mb-3">
-                    <label for="total_copies" class="form-label">Copias Totales:</label>
-                    <input type="number" class="form-control" name="total_copies" value="<%= book.total_copies %>" required>
-                  </div>
-                  
-                  <div class="mb-3">
-                    <label for="available_copies" class="form-label">Copias Disponibles:</label>
-                    <input type="number" class="form-control" name="available_copies" value="<%= book.available_copies %>" required>
-                  </div>
-                  <div class="d-flex mt-4">
-                    <button type="submit" class="btn btn-primary me-2">Guardar cambios</button>
-                    <a href="/books" class="btn btn-secondary">Cancelar</a>
-                  </div>  
-                </form>
-
-                
-            </main>
+                    <form action="/books/editar/<%= book.id %>" method="POST">
+                        <div class="field-group">
+                            <h2 class="field-group-title"><i class="fas fa-info-circle me-2"></i>Información Básica</h2>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="title" class="form-label">Título:</label>
+                                    <input type="text" class="form-control" name="title" id="title" value="<%= book.title %>" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="year" class="form-label">Año de Publicación:</label>
+                                    <input type="number" class="form-control" name="year" id="year" value="<%= book.year || '' %>">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="publisher" class="form-label">Editorial:</label>
+                                <input type="text" class="form-control" name="publisher" id="publisher" value="<%= book.publisher || '' %>">
+                            </div>
+                        </div>
+                        
+                        <div class="field-group">
+                            <h2 class="field-group-title"><i class="fas fa-users me-2"></i>Autores</h2>
+                            <div class="select-container mb-3">
+                                <label for="author_ids" class="form-label">Seleccionar Autores Existentes:</label>
+                                <select class="form-select" name="author_ids" id="author_ids" multiple>
+                                    <% authors.forEach(author => { %>
+                                        <option value="<%= author.id %>" <%= bookAuthorIds.includes(author.id) ? 'selected' : '' %>><%= author.name %></option>
+                                    <% }); %>
+                                </select>
+                                <div class="form-text">Para seleccionar múltiples autores, mantenga presionada la tecla Ctrl (Win) o Cmd (Mac)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Agregar Nuevos Autores:</label>
+                                <div id="new-authors-container">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="new_author_names[]" placeholder="Nombre del autor">
+                                        <button type="button" class="btn btn-outline-primary add-author-field">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="field-group">
+                            <h2 class="field-group-title"><i class="fas fa-tags me-2"></i>Categorías</h2>
+                            <div class="select-container mb-3">
+                                <label for="category_ids" class="form-label">Seleccionar Categorías Existentes:</label>
+                                <select class="form-select" name="category_ids" id="category_ids" multiple>
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category.id %>" <%= bookCategoryIds.includes(category.id) ? 'selected' : '' %>><%= category.name %></option>
+                                    <% }); %>
+                                </select>
+                                <div class="form-text">Para seleccionar múltiples categorías, mantenga presionada la tecla Ctrl (Win) o Cmd (Mac)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Agregar Nuevas Categorías:</label>
+                                <div id="new-categories-container">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="new_category_names[]" placeholder="Nombre de la categoría">
+                                        <button type="button" class="btn btn-outline-primary add-category-field">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="field-group">
+                            <h2 class="field-group-title"><i class="fas fa-copy me-2"></i>Inventario</h2>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="total_copies" class="form-label">Copias Totales:</label>
+                                    <input type="number" class="form-control" name="total_copies" id="total_copies" value="<%= book.total_copies %>" min="1" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="available_copies" class="form-label">Copias Disponibles:</label>
+                                    <input type="number" class="form-control" name="available_copies" id="available_copies" value="<%= book.available_copies %>" min="0" required>
+                                    <div class="form-text text-danger" id="copies-warning" style="display: none;">Las copias disponibles no pueden exceder el total de copias</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="/books" class="btn btn-outline-secondary btn-action me-2">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-action">
+                                <i class="fas fa-save me-2"></i>Guardar Cambios
+                            </button>
+                        </div>  
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
                     
-                </main>
                 <footer class="py-4 bg-light mt-auto">
                     <div class="container-fluid px-4">
                         <div class="d-flex align-items-center justify-content-between small">
@@ -193,7 +223,6 @@
         <script src="/js/datatables-simple-demo.js"></script>
         <script>
           document.addEventListener('DOMContentLoaded', function() {
-            // Agregar campo para nuevo autor
             document.querySelectorAll('.add-author-field').forEach(button => {
               button.addEventListener('click', function() {
                 const container = document.getElementById('new-authors-container');
@@ -204,15 +233,13 @@
                   <button type="button" class="btn btn-outline-danger remove-field">-</button>
                 `;
                 container.appendChild(newField);
-                
-                // Agregar evento para eliminar campo
+
                 newField.querySelector('.remove-field').addEventListener('click', function() {
                   container.removeChild(newField);
                 });
               });
             });
             
-            // Agregar campo para nueva categoría
             document.querySelectorAll('.add-category-field').forEach(button => {
               button.addEventListener('click', function() {
                 const container = document.getElementById('new-categories-container');
@@ -224,7 +251,6 @@
                 `;
                 container.appendChild(newField);
                 
-                // Agregar evento para eliminar campo
                 newField.querySelector('.remove-field').addEventListener('click', function() {
                   container.removeChild(newField);
                 });

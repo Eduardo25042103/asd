@@ -90,26 +90,28 @@
             </nav>
         </div>
         <div id="layoutSidenav_content">
-            <main class="me-2 ms-2 mt-2 mb-3">
+            <main class="py-4">
                 <div class="container-fluid px-4">
-                    <h1 class="mt-4">Editar Préstamo</h1>
-                    <ol class="breadcrumb mb-4">
-                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-                        <li class="breadcrumb-item"><a href="/loans">Préstamos</a></li>
-                        <li class="breadcrumb-item active">Editar Préstamo</li>
-                    </ol>
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800">Editar Préstamo</h1>
+                        <ol class="breadcrumb bg-light py-2 px-3 mb-0 rounded">
+                            <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home me-1"></i>Inicio</a></li>
+                            <li class="breadcrumb-item"><a href="/loans" class="text-decoration-none">Préstamos</a></li>
+                            <li class="breadcrumb-item active">Editar Préstamo</li>
+                        </ol>
+                    </div>
                     
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-edit me-1"></i>
-                            Formulario de Edición
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex align-items-center">
+                            <i class="fas fa-edit me-2 text-primary"></i>
+                            <h6 class="m-0 font-weight-bold">Formulario de Edición</h6>
                         </div>
                         <div class="card-body">
                             <form action="/loans/editar/<%= loan.id %>" method="POST">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <select class="form-select" id="book_id" name="book_id" required>
+                                            <select class="form-select shadow-sm" id="book_id" name="book_id" required>
                                                 <option value="">Seleccione un libro</option>
                                                 <% if (books && books.length > 0) { %>
                                                     <% books.forEach(book => { %>
@@ -124,7 +126,7 @@
                                     <% if (user && user.role === 'admin' && users) { %>
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
-                                                <select class="form-select" id="user_id" name="user_id" required>
+                                                <select class="form-select shadow-sm" id="user_id" name="user_id" required>
                                                     <option value="">Seleccione un usuario</option>
                                                     <% users.forEach(u => { %>
                                                         <option value="<%= u.id %>" <%= loan.user_id == u.id ? 'selected' : '' %>><%= u.full_name || u.username %></option>
@@ -139,17 +141,16 @@
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3">
-                                            <input class="form-control" id="loan_date" name="loan_date" type="date" required 
+                                            <input class="form-control shadow-sm" id="loan_date" name="loan_date" type="date" required 
                                                 value="<%= loan.loan_date ? new Date(loan.loan_date).toISOString().slice(0, 10) : '' %>" />
                                             <label for="loan_date">Fecha de Préstamo</label>
                                         </div>
                                     </div>
                                     
                                     <% if (user && user.role === 'admin') { %>
-                                        <!-- Para administradores, permitir cambiar el estado -->
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
-                                                <select class="form-select" id="status" name="status">
+                                                <select class="form-select shadow-sm" id="status" name="status">
                                                     <option value="activo" <%= loan.status === 'activo' ? 'selected' : '' %>>Activo</option>
                                                     <option value="devuelto" <%= loan.status === 'devuelto' ? 'selected' : '' %>>Devuelto</option>
                                                     <option value="vencido" <%= loan.status === 'vencido' ? 'selected' : '' %>>Vencido</option>
@@ -158,10 +159,9 @@
                                             </div>
                                         </div>
                                     <% } else { %>
-                                        <!-- Solo mostrar el estado como información para usuarios normales -->
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
-                                                <input class="form-control" id="status_display" type="text" readonly 
+                                                <input class="form-control shadow-sm bg-light" id="status_display" type="text" readonly 
                                                     value="<%= loan.status === 'activo' ? 'Activo' : 
                                                             (loan.status === 'vencido' ? 'Vencido' : 
                                                             (loan.status === 'devuelto' ? 'Devuelto' : loan.status)) %>" />
@@ -173,29 +173,38 @@
                                 
                                 <div class="mt-4 mb-0">
                                     <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary btn-block">Actualizar Préstamo</button>
+                                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                            <i class="fas fa-save me-2"></i>Actualizar Préstamo
+                                        </button>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         <div class="card-footer small text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
                             La fecha de devolución se calculará automáticamente (15 días después del préstamo)
                         </div>
                     </div>
                     
-                    <div class="mt-3">
-                        <a href="/loans" class="btn btn-secondary">Volver a la lista de préstamos</a>
+                    <div class="mt-3 d-flex gap-2">
+                        <a href="/loans" class="btn btn-secondary shadow-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Volver
+                        </a>
                         
                         <% if (loan.status !== 'devuelto') { %>
-                            <a href="/loans/devolver/<%= loan.id %>" class="btn btn-success ms-2">Marcar como Devuelto</a>
+                            <a href="/loans/devolver/<%= loan.id %>" class="btn btn-success shadow-sm">
+                                <i class="fas fa-check-circle me-1"></i> Marcar como Devuelto
+                            </a>
                         <% } else { %>
-                            <a href="/loans/reactivar/<%= loan.id %>" class="btn btn-warning ms-2">Deshacer devolución</a>
+                            <a href="/loans/reactivar/<%= loan.id %>" class="btn btn-warning shadow-sm">
+                                <i class="fas fa-undo me-1"></i> Deshacer devolución
+                            </a>
                         <% } %>
                         
                         <% if (user && user.role === 'admin') { %>
-                            <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-danger ms-2" 
+                            <a href="/loans/eliminar/<%= loan.id %>" class="btn btn-danger shadow-sm" 
                                onclick="return confirm('¿Está seguro de que desea eliminar este préstamo?')">
-                                Eliminar Préstamo
+                                <i class="fas fa-trash me-1"></i> Eliminar
                             </a>
                         <% } %>
                     </div>
