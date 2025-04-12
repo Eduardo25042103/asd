@@ -150,9 +150,9 @@
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
                                                 <select class="form-select" id="status" name="status">
-                                                    <option value="active" <%= loan.status === 'active' ? 'selected' : '' %>>Activo</option>
-                                                    <option value="returned" <%= loan.status === 'returned' ? 'selected' : '' %>>Devuelto</option>
-                                                    <option value="overdue" <%= loan.status === 'overdue' ? 'selected' : '' %>>Vencido</option>
+                                                    <option value="activo" <%= loan.status === 'activo' ? 'selected' : '' %>>Activo</option>
+                                                    <option value="devuelto" <%= loan.status === 'devuelto' ? 'selected' : '' %>>Devuelto</option>
+                                                    <option value="vencido" <%= loan.status === 'vencido' ? 'selected' : '' %>>Vencido</option>
                                                 </select>
                                                 <label for="status">Estado</label>
                                             </div>
@@ -162,9 +162,9 @@
                                         <div class="col-md-6">
                                             <div class="form-floating mb-3">
                                                 <input class="form-control" id="status_display" type="text" readonly 
-                                                    value="<%= loan.status === 'active' ? 'Activo' : 
-                                                            (loan.status === 'overdue' ? 'Vencido' : 
-                                                            (loan.status === 'returned' ? 'Devuelto' : loan.status)) %>" />
+                                                    value="<%= loan.status === 'activo' ? 'Activo' : 
+                                                            (loan.status === 'vencido' ? 'Vencido' : 
+                                                            (loan.status === 'devuelto' ? 'Devuelto' : loan.status)) %>" />
                                                 <label for="status_display">Estado (No editable)</label>
                                             </div>
                                         </div>
@@ -186,7 +186,7 @@
                     <div class="mt-3">
                         <a href="/loans" class="btn btn-secondary">Volver a la lista de préstamos</a>
                         
-                        <% if (loan.status !== 'returned') { %>
+                        <% if (loan.status !== 'devuelto') { %>
                             <a href="/loans/devolver/<%= loan.id %>" class="btn btn-success ms-2">Marcar como Devuelto</a>
                         <% } else { %>
                             <a href="/loans/reactivar/<%= loan.id %>" class="btn btn-warning ms-2">Deshacer devolución</a>

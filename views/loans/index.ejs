@@ -77,7 +77,7 @@
                         </a>
                         <div class="collapse" id="collapseLoans" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                             <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="/loans">Mis Préstamos</a>
+                                <a class="nav-link" href="/loans">Ver Préstamos</a>
                                 <a class="nav-link" href="/loans/nuevo">Registrar Préstamo</a>
                             </nav>
                         </div>
@@ -126,20 +126,20 @@
                                         <td><%= loan.due_date ? new Date(loan.due_date).toLocaleDateString() : '-' %></td>
                                         <td><%= loan.return_date ? new Date(loan.return_date).toLocaleDateString() : 'No devuelto' %></td>
                                         <td>
-                                            <% if (loan.status === 'active') { %>
+                                            <% if (loan.status === 'activo') { %>
                                                 <span class="badge bg-warning">Activo</span>
-                                            <% } else if (loan.status === 'returned') { %>
+                                            <% } else if (loan.status === 'devuelto') { %>
                                                 <span class="badge bg-success">Devuelto</span>
-                                            <% } else if (loan.status === 'overdue') { %>
+                                            <% } else if (loan.status === 'vencido') { %>
                                                 <span class="badge bg-danger">Vencido</span>
                                             <% } else { %>
                                                 <span class="badge bg-secondary"><%= loan.status %></span>
                                             <% } %>
                                         </td>
 <td>
-    <% if (loan.status === 'active' || loan.status === 'overdue') { %>
+    <% if (loan.status === 'activo' || loan.status === 'vencido') { %>
         <a href="/loans/devolver/<%= loan.id %>" class="btn btn-sm btn-success">Devolver</a>
-    <% } else if (loan.status === 'returned') { %>
+    <% } else if (loan.status === 'devuelto') { %>
         <a href="/loans/reactivar/<%= loan.id %>" class="btn btn-sm btn-warning">Deshacer devolución</a>
     <% } %>
     <a href="/loans/editar/<%= loan.id %>" class="btn btn-sm btn-warning">Editar</a>
